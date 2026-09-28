@@ -133,7 +133,7 @@ export default function ShowDetailPage() {
         onDelete={handleDelete}
         saveLoading={saveLoading}
         deleteLoading={deleteLoading}
-        errors={saveError}
+        errors={saveError ?? {}}
       />
     </div>
   );
