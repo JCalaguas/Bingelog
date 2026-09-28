@@ -20,21 +20,25 @@ async function request(path, options) {
     } catch {
       // The body was not JSON. The status line is all we have.
     }
-    throw new Error(message)
+    const error = new Error(message)
+    error.status = response.status
+    throw error
   }
 
   return response.status === 204 ? null : response.json()
 }
 
-export const listSightings = () => request('/api/sightings')
+export const showsApi = {
+  list: (status) =>
+    request(`/api/shows${status ? `?status=${encodeURIComponent(status)}` : ''}`),
+  get: (id) => request(`/api/shows/${id}`),
+  create: (show) => request('/api/shows', { method: 'POST', body: JSON.stringify(show) }),
+  update: (id, show) =>
+    request(`/api/shows/${id}`, { method: 'PUT', body: JSON.stringify(show) }),
+  remove: (id) => request(`/api/shows/${id}`, { method: 'DELETE' }),
+}
 
-export const getSighting = (id) => request(`/api/sightings/${id}`)
-
-export const createSighting = (input) =>
-  request('/api/sightings', { method: 'POST', body: JSON.stringify(input) })
-
-export const updateSighting = (id, input) =>
-  request(`/api/sightings/${id}`, { method: 'PUT', body: JSON.stringify(input) })
-
-export const deleteSighting = (id) =>
-  request(`/api/sightings/${id}`, { method: 'DELETE' })
+export const searchApi = {
+  search: (q) => request(`/api/search?q=${encodeURIComponent(q)}`),
+  getShow: (externalId) => request(`/api/search/shows/${externalId}`),
+}
