@@ -1,20 +1,29 @@
 -- The complete shape of the database. Safe to run against an empty database,
 -- and safe to run twice.
---
--- This file is committed on purpose. Your schema is a fact about your
--- application, not a runtime concern: it should be readable by opening a file
--- rather than by connecting to a server. It is also what lets you move to a
--- hosted database in one command.
 
-CREATE TABLE IF NOT EXISTS sightings (
-  id          SERIAL PRIMARY KEY,
-  place       TEXT        NOT NULL,
-  description TEXT        NOT NULL DEFAULT '',
-  spookiness  INTEGER     NOT NULL CHECK (spookiness BETWEEN 1 AND 5),
-  reported_at TIMESTAMPTZ NOT NULL DEFAULT now()
+CREATE TABLE IF NOT EXISTS shows (
+  id               SERIAL PRIMARY KEY,
+  title            TEXT NOT NULL,
+  status           TEXT NOT NULL DEFAULT 'Plan to Watch'
+                     CHECK (status IN ('Plan to Watch', 'Watching', 'Finished')),
+  current_episode  INTEGER NOT NULL DEFAULT 0
+                     CHECK (current_episode >= 0),
+  total_episodes   INTEGER
+                     CHECK (total_episodes IS NULL OR total_episodes > 0),
+  rating           INTEGER
+                     CHECK (rating IS NULL OR rating BETWEEN 1 AND 5),
+  notes            TEXT,
+  cover_url        TEXT,
+  external_id      TEXT,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CHECK (
+    total_episodes IS NULL
+    OR current_episode <= total_episodes
+  )
 );
 
--- The list page always sorts newest first. Without this the database reads
--- every row and sorts it on each request.
-CREATE INDEX IF NOT EXISTS sightings_reported_at_idx
-  ON sightings (reported_at DESC);
+-- The library page filters by status, so index it rather than scanning every
+-- row on each request.
+CREATE INDEX IF NOT EXISTS shows_status_idx
+  ON shows (status);
