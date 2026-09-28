@@ -1,12 +1,13 @@
 import express from 'express'
 import cors from 'cors'
 import { pool } from './db/pool.js'
-import * as sightings from './sightingsRepo.js'
+import * as shows from './showsRepo.js'
+import * as tvmaze from './tvmaze.js'
 
 const app = express()
 
 // CORS before the routes. Middleware registered after a route never sees that
-// route's requests, which is the m4 lesson showing up in production.
+// route's requests.
 //
 // Name your origins. app.use(cors()) with no options sends
 // Access-Control-Allow-Origin: *, which lets any site on the internet call this
@@ -36,73 +37,187 @@ app.get('/readyz', async (request, response) => {
   }
 })
 
-// Validation lives on the server because the client can be bypassed. The
-// browser form is for a fast, friendly message; this is for correctness.
-function validate(body) {
-  const errors = []
-  const place = typeof body.place === 'string' ? body.place.trim() : ''
-  const description =
-    typeof body.description === 'string' ? body.description.trim() : ''
-  const spookiness = Number(body.spookiness)
+const STATUSES = ['Plan to Watch', 'Watching', 'Finished']
 
-  if (!place) errors.push('place is required')
-  if (place.length > 120) errors.push('place must be 120 characters or fewer')
-  if (description.length > 2000) errors.push('description must be 2000 characters or fewer')
-  if (!Number.isInteger(spookiness) || spookiness < 1 || spookiness > 5) {
-    errors.push('spookiness must be a whole number from 1 to 5')
+function toInt(value, { allowNull = false } = {}) {
+  if (value === null || value === undefined || value === '') {
+    return allowNull ? null : undefined
   }
-
-  return { errors, value: { place, description, spookiness } }
+  const n = Number(value)
+  return Number.isInteger(n) ? n : NaN
 }
 
-app.get('/api/sightings', async (request, response, next) => {
+// Validation lives on the server because the client can be bypassed.
+function validateShow(body) {
+  const errors = []
+  const title = typeof body.title === 'string' ? body.title.trim() : ''
+  const status = body.status ?? 'Plan to Watch'
+  const currentEpisode = toInt(body.currentEpisode ?? 0)
+  const totalEpisodes = toInt(body.totalEpisodes, { allowNull: true })
+  const rating = toInt(body.rating, { allowNull: true })
+  const notes =
+    typeof body.notes === 'string' && body.notes.trim() !== '' ? body.notes : null
+  const coverUrl =
+    typeof body.coverUrl === 'string' && body.coverUrl.trim() !== ''
+      ? body.coverUrl
+      : null
+  const externalId =
+    typeof body.externalId === 'string' && body.externalId.trim() !== ''
+      ? body.externalId
+      : null
+
+  if (!title) errors.push('title is required')
+  if (!STATUSES.includes(status)) {
+    errors.push(`status must be one of: ${STATUSES.join(', ')}`)
+  }
+  if (currentEpisode === undefined || currentEpisode < 0) {
+    errors.push('currentEpisode must be an integer of 0 or more')
+  }
+  if (Number.isNaN(totalEpisodes) || (totalEpisodes !== null && totalEpisodes <= 0)) {
+    errors.push('totalEpisodes must be a positive integer or null')
+  }
+  if (Number.isNaN(rating) || (rating !== null && (rating < 1 || rating > 5))) {
+    errors.push('rating must be an integer from 1 to 5 or null')
+  }
+
+  return {
+    errors,
+    value: { title, status, currentEpisode, totalEpisodes, rating, notes, coverUrl, externalId },
+  }
+}
+
+function toShow(row) {
+  return {
+    id: row.id,
+    title: row.title,
+    status: row.status,
+    currentEpisode: row.current_episode,
+    totalEpisodes: row.total_episodes,
+    rating: row.rating,
+    notes: row.notes,
+    coverUrl: row.cover_url,
+    externalId: row.external_id,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}
+
+function parseId(raw) {
+  const id = Number(raw)
+  return Number.isInteger(id) && id > 0 ? id : null
+}
+
+app.get('/api/shows', async (request, response, next) => {
   try {
-    response.json(await sightings.getAll(pool))
+    const status =
+      typeof request.query.status === 'string' ? request.query.status : null
+    response.json((await shows.listShows(pool, status)).map(toShow))
   } catch (error) {
     next(error)
   }
 })
 
-app.get('/api/sightings/:id', async (request, response, next) => {
+app.get('/api/shows/:id', async (request, response, next) => {
+  const id = parseId(request.params.id)
+  if (id === null) {
+    return response.status(400).json({ error: 'id must be a positive integer' })
+  }
   try {
-    const row = await sightings.getById(pool, request.params.id)
-    if (!row) return response.status(404).json({ error: 'Not found' })
-    response.json(row)
+    const row = await shows.getShowById(pool, id)
+    if (!row) return response.status(404).json({ error: 'Show not found' })
+    response.json(toShow(row))
   } catch (error) {
     next(error)
   }
 })
 
-app.post('/api/sightings', async (request, response, next) => {
-  const { errors, value } = validate(request.body ?? {})
-  if (errors.length > 0) return response.status(400).json({ error: errors.join('; ') })
-
+app.post('/api/shows', async (request, response, next) => {
+  const { errors, value } = validateShow(request.body ?? {})
+  if (errors.length > 0) {
+    return response.status(400).json({ error: errors.join('; ') })
+  }
   try {
-    response.status(201).json(await sightings.create(pool, value))
+    response.status(201).json(toShow(await shows.createShow(pool, value)))
   } catch (error) {
     next(error)
   }
 })
 
-app.put('/api/sightings/:id', async (request, response, next) => {
-  const { errors, value } = validate(request.body ?? {})
-  if (errors.length > 0) return response.status(400).json({ error: errors.join('; ') })
-
+app.put('/api/shows/:id', async (request, response, next) => {
+  const id = parseId(request.params.id)
+  if (id === null) {
+    return response.status(400).json({ error: 'id must be a positive integer' })
+  }
   try {
-    const row = await sightings.update(pool, request.params.id, value)
-    if (!row) return response.status(404).json({ error: 'Not found' })
-    response.json(row)
+    const existing = await shows.getShowById(pool, id)
+    if (!existing) return response.status(404).json({ error: 'Show not found' })
+
+    // A partial PUT keeps the fields the caller leaves out. Merge the body over
+    // the stored row. "undefined" means omitted and keeps the old value; an
+    // explicit null still clears the field, so unrating a show still works.
+    const current = toShow(existing)
+    const body = request.body ?? {}
+    const merged = {
+      title: body.title !== undefined ? body.title : current.title,
+      status: body.status !== undefined ? body.status : current.status,
+      currentEpisode:
+        body.currentEpisode !== undefined ? body.currentEpisode : current.currentEpisode,
+      totalEpisodes:
+        body.totalEpisodes !== undefined ? body.totalEpisodes : current.totalEpisodes,
+      rating: body.rating !== undefined ? body.rating : current.rating,
+      notes: body.notes !== undefined ? body.notes : current.notes,
+      coverUrl: body.coverUrl !== undefined ? body.coverUrl : current.coverUrl,
+      externalId: body.externalId !== undefined ? body.externalId : current.externalId,
+    }
+
+    const { errors, value } = validateShow(merged)
+    if (errors.length > 0) {
+      return response.status(400).json({ error: errors.join('; ') })
+    }
+
+    const row = await shows.updateShow(pool, id, value)
+    response.json(toShow(row))
   } catch (error) {
     next(error)
   }
 })
 
-app.delete('/api/sightings/:id', async (request, response, next) => {
+app.delete('/api/shows/:id', async (request, response, next) => {
+  const id = parseId(request.params.id)
+  if (id === null) {
+    return response.status(400).json({ error: 'id must be a positive integer' })
+  }
   try {
-    const removed = await sightings.remove(pool, request.params.id)
-    if (!removed) return response.status(404).json({ error: 'Not found' })
+    const removed = await shows.deleteShow(pool, id)
+    if (!removed) return response.status(404).json({ error: 'Show not found' })
     response.status(204).end()
   } catch (error) {
+    next(error)
+  }
+})
+
+app.get('/api/search', async (request, response, next) => {
+  const query = typeof request.query.q === 'string' ? request.query.q.trim() : ''
+  if (query === '') {
+    return response.status(400).json({ error: 'q is required' })
+  }
+  try {
+    response.json(await tvmaze.searchShows(query))
+  } catch (error) {
+    error.status = 502
+    next(error)
+  }
+})
+
+app.get('/api/search/shows/:externalId', async (request, response, next) => {
+  const externalId = request.params.externalId
+  if (!/^\d+$/.test(externalId)) {
+    return response.status(400).json({ error: 'externalId must be a positive integer' })
+  }
+  try {
+    response.json(await tvmaze.getShow(externalId))
+  } catch (error) {
+    error.status = 502
     next(error)
   }
 })
@@ -115,6 +230,12 @@ app.use((request, response) => {
 // stack trace to a stranger tells them about your file layout and dependencies.
 app.use((error, request, response, next) => {
   console.error(error)
+  if (error.type === 'entity.parse.failed') {
+    return response.status(400).json({ error: 'Invalid JSON body' })
+  }
+  if (error.status === 502) {
+    return response.status(502).json({ error: 'Metadata service unavailable' })
+  }
   response.status(500).json({ error: 'Something went wrong on the server' })
 })
 
