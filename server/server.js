@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from 'node:crypto'
 import express from 'express'
 import cors from 'cors'
 import { pool } from './db/pool.js'
@@ -35,6 +36,42 @@ app.get('/readyz', async (request, response) => {
     console.error('readyz failed:', error.message)
     response.status(503).json({ ok: false, db: 'down' })
   }
+})
+
+// Everything below this line needs a username and password (HTTP Basic Auth).
+// /healthz and /readyz stay above it so the host's health check, which cannot
+// send credentials, still works. cors() answers preflight requests earlier, so
+// it is not blocked here either.
+const authUser = process.env.AUTH_USER
+const authPass = process.env.AUTH_PASS
+
+if (process.env.NODE_ENV === 'production' && (!authUser || !authPass)) {
+  console.error('AUTH_USER and AUTH_PASS must be set in production.')
+  process.exit(1)
+}
+
+// timingSafeEqual needs equal-length buffers, so hash both sides first.
+function safeEqual(a, b) {
+  const hash = (value) => createHash('sha256').update(value).digest()
+  return timingSafeEqual(hash(a), hash(b))
+}
+
+app.use((request, response, next) => {
+  if (!authUser || !authPass) return next() // local dev without auth configured
+
+  const header = request.headers.authorization || ''
+  if (header.startsWith('Basic ')) {
+    const decoded = Buffer.from(header.slice(6), 'base64').toString('utf8')
+    const separator = decoded.indexOf(':')
+    if (separator !== -1) {
+      const user = decoded.slice(0, separator)
+      const pass = decoded.slice(separator + 1)
+      if (safeEqual(user, authUser) && safeEqual(pass, authPass)) return next()
+    }
+  }
+
+  response.set('WWW-Authenticate', 'Basic realm="BingeLog"')
+  response.status(401).json({ error: 'Authentication required' })
 })
 
 const STATUSES = ['Plan to Watch', 'Watching', 'Finished']
