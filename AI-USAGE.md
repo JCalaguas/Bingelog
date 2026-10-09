@@ -362,6 +362,29 @@ carried, and the "Earlier version of this file" section of the workspace copy
 was deleted so both copies of this file are identical.
 **Commit:** the commit that adds this entry (see `git log` for this file).
 
+### 20. Oct 2026 (worked 2026-10-09, entry written 21:20 +0800) — Claude (chat) and Claude Code (Sonnet 5.5) — Final presentation deck
+**What this entry is:** the slide deck `BingeLog Final Presentation.pptx` and its
+speaker notes. The deck file is not in this repository.
+**Who did what:**
+- **Claude (in chat)** generated the first version of the slides and the
+  speaker script.
+- **Claude Code** edited the .pptx file: text fixes on slides 3, 4, 6, 7 and 8,
+  the slide 4 table header contrast (dark header row with light text), the font
+  change to Georgia (headings) and Arial (everything else), the two live links
+  on slide 6, and the speaker-note wording. It also removed placeholder
+  `[CONFIRM]` text where I had given it the facts to use, and it rendered the
+  slides to check that the text fits.
+- **Me:** I reviewed the deck against the repo, corrected the claims about AI
+  use and about security, and wrote my own name, section and contribution
+  lines. The slide 8 "What I did" lines are my statements about my own work.
+**Limits:** Claude Code could not check which of my "What I did" statements
+are true; that is my responsibility. The slide 6 links were checked by Claude
+Code to return HTTP 200 on 2026-10-09 earlier in the session, not at the moment
+of the last deck edit. The deck was last rendered in PowerPoint on Windows after
+the font change, and the edits were done with python-pptx on a copy of the
+file, with the original kept as a backup.
+**Commit:** the commit that adds this entry (see `git log` for this file).
+
 ## Where the AI got it wrong
 
 ### 1. NaN validation bug (found 2026-09-23)
