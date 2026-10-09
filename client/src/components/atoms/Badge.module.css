@@ -22,5 +22,5 @@
 
 .finished {
   background: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-on-primary);
 }

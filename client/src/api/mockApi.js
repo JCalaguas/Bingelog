@@ -114,12 +114,12 @@ function validateShow(input) {
 // works even when the library is empty. "totalEpisodes: null" means an ongoing
 // show with no known end.
 const CATALOG = [
-  { externalId: 'tv-101', title: 'Steel Horizon', coverUrl: 'https://placehold.co/600x900', totalEpisodes: 24 },
-  { externalId: 'tv-102', title: 'Moonlit Alley', coverUrl: 'https://placehold.co/600x900', totalEpisodes: 13 },
+  { externalId: 'tv-101', title: 'Steel Horizon', coverUrl: null, totalEpisodes: 24 },
+  { externalId: 'tv-102', title: 'Moonlit Alley', coverUrl: null, totalEpisodes: 13 },
   { externalId: 'tv-103', title: 'Crimson Circuit', coverUrl: null, totalEpisodes: null },
-  { externalId: 'tv-104', title: 'Paper Lanterns', coverUrl: 'https://placehold.co/600x900', totalEpisodes: 26 },
+  { externalId: 'tv-104', title: 'Paper Lanterns', coverUrl: null, totalEpisodes: 26 },
   { externalId: 'tv-105', title: 'Northbound', coverUrl: null, totalEpisodes: 10 },
-  { externalId: 'tv-106', title: 'Salt & Ember', coverUrl: 'https://placehold.co/600x900', totalEpisodes: 8 },
+  { externalId: 'tv-106', title: 'Salt & Ember', coverUrl: null, totalEpisodes: 8 },
   { externalId: 'tv-107', title: 'The Hollow Hour', coverUrl: null, totalEpisodes: null },
 ]
 

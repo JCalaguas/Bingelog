@@ -11,7 +11,7 @@ export default function ShowPreview({ result }) {
         <img className={styles.cover} src={result.coverUrl} alt="" />
       ) : (
         <span className={styles.placeholder} aria-hidden="true">
-          {result.title.charAt(0).toUpperCase()}
+          {result.title}
         </span>
       )}
       <div className={styles.body}>

@@ -21,7 +21,7 @@
 
 .primary {
   background: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-on-primary);
   border-color: var(--color-primary);
 }
 
@@ -42,7 +42,7 @@
 
 .accent {
   background: var(--color-accent);
-  color: var(--color-text);
+  color: var(--color-on-primary);
   border-color: var(--color-accent);
 }
 
@@ -57,7 +57,7 @@
 }
 
 .danger:hover:not(:disabled) {
-  background: #fdecec;
+  background: var(--color-error-soft);
 }
 
 .spinner {

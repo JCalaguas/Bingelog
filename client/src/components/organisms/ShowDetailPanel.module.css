@@ -28,8 +28,15 @@
   border-radius: 10px;
   background: var(--color-primary-soft);
   color: var(--color-primary-dark);
-  font-size: var(--font-size-lg);
+  padding: var(--space-3);
+  text-align: center;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 26px;
   font-weight: 700;
+  line-height: 1.2;
 }
 
 .details {

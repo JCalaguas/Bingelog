@@ -9,7 +9,7 @@ export default function ShowCard({ show, onClick }) {
         <img className={styles.cover} src={show.coverUrl} alt="" />
       ) : (
         <span className={styles.placeholder} aria-hidden="true">
-          {show.title.charAt(0).toUpperCase()}
+          {show.title}
         </span>
       )}
       <span className={styles.body}>

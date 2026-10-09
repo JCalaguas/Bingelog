@@ -1,18 +1,23 @@
 :root {
-  --color-primary: #4F46E5;
-  --color-primary-dark: #3730A3;
-  --color-primary-soft: #E7E5FB;
+  color-scheme: dark;
+  --color-primary: #9B95FF;
+  --color-primary-dark: #C9C5FF;
+  --color-primary-soft: #3B3A66;
+  --color-on-primary: #14141F;
   --color-accent: #F59E0B;
-  --color-accent-soft: #FEF3C7;
-  --color-bg: #F5F6FA;
-  --color-surface: #FFFFFF;
-  --color-text: #1B1B2A;
-  --color-text-muted: #5A5A6E;
-  --color-border: #D9D9E3;
-  --color-border-strong: #6B7280;
-  --color-error: #B91C1C;
+  --color-accent-soft: #3D3320;
+  --color-bg: #1E1F22;
+  --color-surface: #2A2B2F;
+  --color-text: #ECECF1;
+  --color-text-muted: #B0B1BB;
+  --color-border: #3D3E44;
+  --color-border-strong: #8A8B94;
+  --color-error: #FF8A8A;
+  --color-error-soft: #4A2326;
+  --shadow-hover: rgba(0, 0, 0, 0.5);
 
   --font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
   --font-size-lg: 24px;
   --font-size-base: 16px;
   --font-size-sm: 13px;
