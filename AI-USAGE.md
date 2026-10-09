@@ -2,7 +2,9 @@
 
 This project used ChatGPT for planning, DeepSeek for coding and
 implementation assistance, and Claude (chat and Claude Code) for guidance,
-deployment help and one piece of server code. Neither tool wrote the whole project — see
+deployment help, one piece of server code, and the later client work in
+entries 8 to 13 (theme, episode input, status rules, search, login screen,
+deploy config). None of the tools wrote the whole project — see
 "Who wrote what" below for exactly which parts are mine.
 
 ## How I used AI
@@ -86,6 +88,79 @@ service, where `/api/shows` now asks for a login.
 have Claude write it, so it counts as AI-written code, not mine.
 **Commit:** `403bcfb` — https://github.com/JCalaguas/Bingelog/commit/403bcfb
 
+### 8. Oct 2026 (worked 2026-10-02) — Claude Code (Sonnet 5.5) — Dark theme, sticky header, cover fallback
+**Asked:** Make the header sticky, make the site dark grey, and show the
+show's title instead of the first letter when there is no cover (and get rid
+of the "600 x 900" demo images).
+**Produced:** New palette values in `global.css`, a new `--color-on-primary`
+token (dark text on the lighter indigo and on the amber button), dark
+replacements for the hard-coded light colours in `Button`/`Badge`/`ShowCard`,
+`position: sticky` on the header, title text in Playfair Display (Google Fonts
+link in `index.html`) in the cover placeholders, `null` instead of
+`placehold.co` covers in `seed.json`, `mockApi.js` and `seed.sql`.
+**Checked:** `vite build` passes, and Claude computed the contrast ratios of
+the new colour pairs with a script. Claude did not look at it in a browser.
+**Known mismatch:** the M6A3 design system still describes the light palette
+and a single system font; the docs were not updated with this change.
+**Commit:** `20ea72e` — https://github.com/JCalaguas/Bingelog/commit/20ea72e
+
+### 9. Oct 2026 (worked 2026-10-05) — Claude Code (Sonnet 5.5) — Typed episode input and total-episodes field
+**Asked:** Let the user type the current episode, not only use -/+; later,
+add a way to edit total episodes on Show Detail.
+**Produced:** A rewrite of `EpisodeStepper.jsx`/`.module.css` (typed input,
+applied on blur or Enter, capped at the total, non-numbers reverted) and a new
+`TotalEpisodesField.jsx` wired into `ShowDetailPanel.jsx` (blank = unknown
+total, invalid values show an error and are not applied).
+**Checked:** `vite build` passes. No automated tests; the behaviour was
+reasoned through, not run.
+**Note:** this changes a component I wrote myself — see "Who wrote what".
+**Commit:** `38575e8` — https://github.com/JCalaguas/Bingelog/commit/38575e8
+
+### 10. Oct 2026 (worked between 2026-10-05 and 2026-10-09) — Claude Code (Sonnet 5.5) — Status follows episode progress
+**Asked:** Status should follow the episode: 0 = Plan to Watch, in between =
+Watching, equal to the total = Finished; Finished should set the episode to
+the total (1 when the total is unknown) and follow the total when it changes.
+**Produced:** `statusFromProgress()` in `constants.js`, the status/episode
+rules in `ShowDetailPage.jsx`, and the matching starting episode in
+`AddShowPage.jsx` (Plan to Watch 0, Watching 1, Finished total or 1).
+**Limits:** client-side only. The server and `mockApi.js` do not enforce
+these rules, so calling the API directly can still save a Finished show at
+episode 0.
+**Checked:** `vite build` passes. Not run in a browser by Claude.
+**Commit:** `7fa9363` — https://github.com/JCalaguas/Bingelog/commit/7fa9363
+
+### 11. Oct 2026 (worked 2026-10-02) — Claude Code (Sonnet 5.5) — Library search
+**Asked:** A search bar for the library.
+**Produced:** `LibrarySearch.jsx`/`.module.css` and the filtering in
+`LibraryPage.jsx` (case-insensitive title match on the loaded list, works
+together with the status filter, "No matches" empty state, Clear button).
+**Checked:** `vite build` passes. Not run in a browser by Claude.
+**Commit:** `66596f6` — https://github.com/JCalaguas/Bingelog/commit/66596f6
+
+### 12. Oct 2026 (worked 2026-10-04) — Claude Code (Sonnet 5.5) — Login screen for real mode
+**Asked:** Add a login screen so the Pages-hosted client can use the
+Basic-Auth-protected API, with: sessionStorage not localStorage, shown only in
+real mode, the password checked with a real request before unlocking, and the
+password never in a `VITE_` variable or logged.
+**Produced:** `authApi` in `httpApi.js`/`mockApi.js`/`index.js`,
+`useLoggedIn.js`, `LoginPage.jsx`, the gate in `App.jsx`, and a Log out button
+in `Header.jsx`.
+**Checked:** `vite build` passes in both modes. Claude tested the login logic
+against a throwaway local server that required a password (wrong password
+gave 401 and stored nothing; right password unlocked; logout cleared it). It
+was not tested against the deployed Render API by Claude.
+**Commit:** `83b5fdd` — https://github.com/JCalaguas/Bingelog/commit/83b5fdd
+
+### 13. Oct 2026 (worked 2026-10-09) — Claude Code (Sonnet 5.5) — Deploy config for a second (Vercel) copy
+**Asked:** Check how the build sets `base`, make a plain `npm run build` use
+`/` while the Pages workflow keeps `/Bingelog/`, and add a Vercel SPA rewrite.
+**Produced:** `client/vercel.json`. No change was needed to `vite.config.js`
+or the workflow: `base` already defaults to `/` and the workflow already sets
+`VITE_BASE_PATH`. Claude built both ways and checked the asset paths
+(`/assets/...` and `/Bingelog/assets/...`).
+**Not done:** the Vercel deployment itself.
+**Commit:** `c3e4177` — https://github.com/JCalaguas/Bingelog/commit/c3e4177
+
 ## Where the AI got it wrong
 
 ### 1. NaN validation bug (found 2026-09-23)
@@ -131,10 +206,31 @@ console error, and applied the one-line fix myself.
 `ShowDetailPage.jsx`.
 **Commit:** `54f227b` — https://github.com/JCalaguas/Bingelog/commit/54f227b
 
+### 4. Add Show saved "Finished" shows at episode 0, and Show Detail had no total field (found Oct 2026)
+**What happened:** The Add Show form (generated in entry 5) never sent a
+`currentEpisode`, so the server defaulted it to 0 and a show added as
+"Finished" was stored as Finished at episode 0. Show Detail also had no field
+to edit total episodes, so a wrong or missing total from TVMaze could not be
+corrected.
+**How I found it:** by testing the app, not caught by the AI.
+**Fix:** Claude Code added the total field and the status/episode rules
+(entries 9 and 10). The rules are client-side only, so the same bad state is
+still possible through direct API calls.
+**Commits:** `38575e8`, `7fa9363`
+
 ## Who wrote what
 
 **`client/src/components/EpisodeStepper.jsx` and
-`EpisodeStepper.module.css`** — written by me, not DeepSeek.
+`EpisodeStepper.module.css`** — originally written by me, not DeepSeek, then
+partly rewritten by Claude Code on 2026-10-05 (commit `38575e8`). The `-`/`+`
+buttons and the limit logic (`value > 0`, and the `total == null` check)
+are my original code and are kept. Claude Code added the typed number input
+(a text draft that is applied on blur or Enter, capped at the total, with
+non-digits reverted), a `useEffect` that keeps the draft in sync with the real
+value, the `/ total` label, the proper `−` sign, and the input styles. It also
+dropped my explanatory code comments when it rewrote the file. So the
+component is now a mix, and the explanation below describes my original
+version only.
 
 In my own words: this component shows the current episode number with
 `-`/`+` buttons. It's a controlled component — it holds no state of its
@@ -147,7 +243,7 @@ when `total` isn't `null` — otherwise it would try to compare a number
 against `null`, which doesn't mean what you'd expect. I used
 `total == null` (loose equality, so it also catches `undefined`) to short
 circuit that comparison before it happens.
-**Commits:** `dea3e7c` (component logic), `bc7581a` (styles — I forgot to
+**Commits (original version):** `dea3e7c` (component logic), `bc7581a` (styles — I forgot to
 save the CSS file before the first commit, so it went in empty; this
 commit added the actual styles), `9aa9391` (small follow-up: added
 `color`/`border-radius` from the design tokens).
