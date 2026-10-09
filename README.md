@@ -234,10 +234,10 @@ same invented seed data, not against the deployed server.*
   — a cover image URL field is planned for manual entries.
 - Two moderate `npm audit` findings in dev tooling dependencies, not yet
   addressed.
-- **Layout rough edges.** On a phone each Library card is full width and about
-  500px tall, so you scroll a long way; the status badge stretches across the
-  whole row on Show Detail; and the episode only saves when you press Save
-  (leaving with Back discards it).
+- **Layout rough edges.** The status badge stretches across the whole row on
+  Show Detail, and the episode only saves when you press Save (leaving with
+  Back discards it). On a phone the Library now shows two cards per row, but
+  the demo-mode banner is tall enough to push them below the fold.
 - **Design docs are behind the app.** The M6A3 design-system document still
   describes the light palette and a single system font; the app now uses a
   dark grey palette and Playfair Display for cover fallbacks.

@@ -4,7 +4,7 @@ This project used ChatGPT for planning, DeepSeek for coding and
 implementation assistance, and Claude (chat and Claude Code) for guidance,
 deployment help, one piece of server code, and the later client work in
 entries 8 to 16 (theme, episode input, status rules, search, login screen,
-deploy config, revised status rules, total-field investigation, docs). Entry 17 is guidance and review on server changes I wrote myself. None of the tools wrote the whole project — see
+deploy config, revised status rules, total-field investigation, docs). Entry 17 is guidance and review on server changes I wrote myself, and entry 18 is a small CSS change Claude Code wrote. None of the tools wrote the whole project — see
 "Who wrote what" below for exactly which parts are mine.
 
 ## How I used AI
@@ -286,6 +286,28 @@ fixed).
 Code added by default. (CONFIRM this is the attribution you want for code you
 wrote yourself.)
 **Commit:** `a35de20` — https://github.com/JCalaguas/Bingelog/commit/a35de20
+
+### 18. Oct 2026 (worked 2026-10-09, CONFIRM the date) — Claude Code (Sonnet 5.5) — Two-column Library on phones
+**Asked:** On a 375px phone each Library card was so tall that one cover filled
+the screen. Make a small CSS-only change so at least two shows are visible
+without scrolling, without changing behaviour, and check 320px, 375px and
+desktop in a real browser.
+**Produced:** CSS only, written by Claude Code, in
+`client/src/components/organisms/ShowList.module.css` (two columns below
+768px, three from 768px as before, smaller gap) and
+`client/src/components/molecules/ShowCard.module.css` (tighter card padding,
+a smaller cover-fallback title on phones, `min-width: 0` and word wrapping so
+long titles cannot push a card wider). No component or JavaScript changed.
+**Checked (by Claude Code, headless Chrome against demo mode):** with seven
+test shows including a very long title, at 320, 375, 768 and 1100px there was no
+horizontal scroll, no text overflowing a card and no overlapping text. At
+375px with the demo banner removed (which matches real mode), two shows are
+fully visible without scrolling and the next row is peeking. At 320x568 the
+tops of two cards are visible but no card is fully on screen. With the demo
+banner showing on a phone, the banner alone pushes the cards below the fold.
+Not looked at on a real phone, and not checked on the live Vercel site after
+the deploy.
+**Commit:** `1ab3cea` — https://github.com/JCalaguas/Bingelog/commit/1ab3cea
 
 ## Where the AI got it wrong
 
