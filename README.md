@@ -41,6 +41,8 @@ cd ../client && npm install
 | `DATABASE_URL` | `postgres://postgres:yourpassword@localhost:5432/bingelog` | Never commit a real value |
 | `PORT` | `3000` | Optional, defaults to 3000 |
 | `CORS_ORIGINS` | `http://localhost:5173` | Comma-separated allowed origins |
+| `NODE_ENV` | `production` | Set on the host. In production the server refuses to start without `AUTH_USER` and `AUTH_PASS` |
+| `AUTH_USER` / `AUTH_PASS` | *(set on the host)* | HTTP Basic Auth login for every route except `/healthz` and `/readyz`. Leave both unset locally to skip the login |
 
 **`client/.env`** (copy from `client/.env.example`):
 
@@ -84,7 +86,9 @@ npm run dev
 ```
 Open `http://localhost:5173`. The demo banner disappears once real mode is active.
 
-**Live demo:** https://jcalaguas.github.io/Bingelog/ (GitHub Pages, demo mode only — the API is not yet deployed, see Known Issues)
+**Live demo:** https://jcalaguas.github.io/Bingelog/ (GitHub Pages, demo mode only, browser `localStorage` data, no real backend)
+
+**Deployed API:** https://bingelog-6un8.onrender.com — Express on Render (free tier, so the first request after idle takes ~30 seconds) with PostgreSQL on Neon. Every route except `/healthz` and `/readyz` is behind HTTP Basic Auth; the Pages demo does not call it, because anything in a `VITE_*` variable is public.
 
 ## Features and usage
 
@@ -112,6 +116,10 @@ Open `http://localhost:5173`. The demo banner disappears once real mode is activ
 | DELETE | `/api/shows/:id` | Delete a show |
 | GET | `/api/search?q=` | Search TVMaze by title |
 | GET | `/api/search/shows/:externalId` | Look up one TVMaze show, including total episode count for ended shows |
+
+Every `/api/*` route requires HTTP Basic Auth (`401` with a
+`WWW-Authenticate` header otherwise); `/healthz` and `/readyz` are open so the
+host's health check works.
 
 All routes return JSON. Errors are `{ "error": "message" }` with an
 appropriate status code (400 for invalid input, 404 for a missing show,
@@ -148,13 +156,14 @@ Bingelog/
 
 ## Known issues and next steps
 
-- **No access gate yet.** The deployed client has no login in front of it.
-  Once the API is deployed, an access layer (Cloudflare Zero Trust or HTTP
-  Basic Auth) needs to be added before the app is treated as "live" —
-  see `SECURITY-CHECKLIST.md`.
-- **API and database are not deployed.** Only the static client is live on
-  GitHub Pages, running in demo mode. The Express API and PostgreSQL
-  database still need a host (e.g. Render/Railway + Neon/Supabase).
+- **Access gate is a single shared login.** HTTP Basic Auth protects the
+  deployed API (one username and password from environment variables). There
+  are no per-user accounts and no rate limiting on failed logins. The public
+  Pages demo is unprotected on purpose: it only holds browser-local mock data.
+- **Free-tier hosting.** The Render service sleeps when idle, and the API
+  connects to Neon as its owner role rather than a limited-permission user.
+- **`mockApi.js` duplicates the server's validation and merge-on-update
+  logic**, so the two can drift apart.
 - **Status doesn't auto-update to "Finished"** when the current episode
   reaches the total — planned, not yet built.
 - **No way to add or change a cover image** outside of what TVMaze returns
@@ -167,7 +176,9 @@ Bingelog/
 
 ## AI usage
 
-This project used AI assistance for both planning and implementation.
+AI credit: ChatGPT was used for planning, DeepSeek generated most of the
+server and client code in prompted steps, and Claude gave guidance and wrote
+the Basic Auth middleware. I wrote `EpisodeStepper` myself.
 See [`AI-USAGE.md`](AI-USAGE.md) for the full disclosure, including what
 was AI-written, what I wrote myself, and real cases where the AI got it
 wrong.

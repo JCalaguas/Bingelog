@@ -1,7 +1,8 @@
 # AI Usage — BingeLog
 
-This project used ChatGPT for planning and DeepSeek for coding and
-implementation assistance. Neither tool wrote the whole project — see
+This project used ChatGPT for planning, DeepSeek for coding and
+implementation assistance, and Claude (chat and Claude Code) for guidance,
+deployment help and one piece of server code. Neither tool wrote the whole project — see
 "Who wrote what" below for exactly which parts are mine.
 
 ## How I used AI
@@ -70,6 +71,20 @@ verified with `curl` against a known ended show (Naruto, externalId 495 →
 220 episodes).
 **Changed:** Nothing.
 **Commit:** `2048d34`.
+
+### 7. 2026-10-01 — Claude Code — Basic Auth access gate
+**Asked:** Add an access gate in front of the deployed API so it is not open
+to the internet, and set up Render and Neon hosting with me step by step.
+**Produced:** A Basic Auth middleware in `server/server.js` (credentials
+from `AUTH_USER`/`AUTH_PASS`, compared with `timingSafeEqual`, `/healthz`
+and `/readyz` left open, production refuses to boot without them) and the
+matching placeholders in `server/.env.example`.
+**Kept:** All of it as written. I tested it locally with `curl` (no
+credentials 401, wrong password 401, `/healthz` 200) and on the deployed
+service, where `/api/shows` now asks for a login.
+**Changed:** Nothing. Claude suggested I write it myself for the 20% rule; I chose to
+have Claude write it, so it counts as AI-written code, not mine.
+**Commit:** `403bcfb` — https://github.com/JCalaguas/Bingelog/commit/403bcfb
 
 ## Where the AI got it wrong
 
