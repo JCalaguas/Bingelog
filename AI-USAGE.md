@@ -3,8 +3,8 @@
 This project used ChatGPT for planning, DeepSeek for coding and
 implementation assistance, and Claude (chat and Claude Code) for guidance,
 deployment help, one piece of server code, and the later client work in
-entries 8 to 15 (theme, episode input, status rules, search, login screen,
-deploy config, revised status rules, total-field investigation). None of the tools wrote the whole project — see
+entries 8 to 16 (theme, episode input, status rules, search, login screen,
+deploy config, revised status rules, total-field investigation, docs). None of the tools wrote the whole project — see
 "Who wrote what" below for exactly which parts are mine.
 
 ## How I used AI
@@ -104,7 +104,7 @@ the new colour pairs with a script. Claude did not look at it in a browser.
 and a single system font; the docs were not updated with this change.
 **Commit:** `20ea72e` — https://github.com/JCalaguas/Bingelog/commit/20ea72e
 
-### 9. Oct 2026 (worked 2026-10-05) — Claude Code (Sonnet 5.5) — Typed episode input and total-episodes field
+### 9. Oct 2026 (episode input 2026-10-05; total field between 2026-10-05 and 2026-10-09) — Claude Code (Sonnet 5.5) — Typed episode input and total-episodes field
 **Asked:** Let the user type the current episode, not only use -/+; later,
 add a way to edit total episodes on Show Detail.
 **Produced:** A rewrite of `EpisodeStepper.jsx`/`.module.css` (typed input,
@@ -117,6 +117,9 @@ reasoned through, not run.
 **Commit:** `38575e8` — https://github.com/JCalaguas/Bingelog/commit/38575e8
 
 ### 10. Oct 2026 (worked between 2026-10-05 and 2026-10-09) — Claude Code (Sonnet 5.5) — Status follows episode progress
+**Superseded by entry 14.** This is what commit `7fa9363` did when it was
+made. The part about Finished with no total saving at episode 1 is no longer
+how the app works: a show with no total can now never be Finished.
 **Asked:** Status should follow the episode: 0 = Plan to Watch, in between =
 Watching, equal to the total = Finished; Finished should set the episode to
 the total (1 when the total is unknown) and follow the total when it changes.
@@ -127,9 +130,6 @@ rules in `ShowDetailPage.jsx`, and the matching starting episode in
 these rules, so calling the API directly can still save a Finished show at
 episode 0.
 **Checked:** `vite build` passes. Not run in a browser by Claude.
-**Superseded:** the "Finished with no total saves at episode 1" behaviour in
-this entry was replaced by entry 14 (a show with no total can never be
-Finished).
 **Commit:** `7fa9363` — https://github.com/JCalaguas/Bingelog/commit/7fa9363
 
 ### 11. Oct 2026 (worked 2026-10-02) — Claude Code (Sonnet 5.5) — Library search
@@ -161,7 +161,7 @@ was not tested against the deployed Render API by Claude.
 or the workflow: `base` already defaults to `/` and the workflow already sets
 `VITE_BASE_PATH`. Claude built both ways and checked the asset paths
 (`/assets/...` and `/Bingelog/assets/...`).
-**Not done:** the Vercel deployment itself.
+**Not done by Claude:** creating or testing the Vercel project itself.
 **Commit:** `c3e4177` — https://github.com/JCalaguas/Bingelog/commit/c3e4177
 
 ### 14. Oct 2026 (worked 2026-10-09) — Claude Code (Sonnet 5.5) — A show with no total can never be Finished
@@ -210,6 +210,40 @@ visibly changes while typing, which is the most likely thing that looked like
 were not tested by Claude. If it still fails there, the browser console error
 and the PUT request/response from the Network tab are needed.
 **Commit:** `0d0e3aa` — https://github.com/JCalaguas/Bingelog/commit/0d0e3aa
+
+### 16. Oct 2026 (worked 2026-10-09) — Claude Code (Sonnet 5.5) — Docs: README, screenshots, security checklist, journal draft
+**Asked:** Correct security-checklist rows 18, 21, 23 and 30; add a security
+paragraph to the journal; make the README work for a stranger (Vercel link,
+explain the login without publishing the password, replace the old
+light-theme screenshots with current ones including real mode, check the setup
+steps from a fresh clone).
+**Produced:**
+- **README** (commit `de593de`): the Vercel real-mode link, a "Logging in"
+  section, the updated project structure, a Credits section (TVMaze,
+  Playfair Display), updated known issues, and seven new screenshots taken by
+  Claude with headless Chrome. The demo-mode screenshots use the invented demo
+  data. The two real-mode screenshots were taken against a local copy of the
+  API running on an in-memory database with the invented seed data, not
+  against the deployed server, and the README says so.
+- **Security checklist** (rows 18, 21, 23, 30 and its header, in the course
+  workspace repo, commit `bcff955`): Claude wrote the new row text from what
+  the code does. Claude did not test the live Vercel site or the deployed
+  Render API, so statements about how those behave come from reading the code
+  and from what I told it.
+- **`journal/week-4.md`** (same workspace commit `bcff955`): **Claude wrote
+  this draft** of the security paragraph, from the project's contents rather
+  than from my own account of the week. I will rewrite it in my own words
+  before submitting; until then it is not my writing.
+- **This file:** corrections to entries 9, 10 and 13 (dates, the superseded
+  note, and wording about Vercel) and this entry.
+**Checked:** from a fresh clone of the GitHub repo, the client `npm ci` and
+`npm run build` pass and the dev server answers in demo mode; the server
+`npm ci` and a syntax check pass. Real PostgreSQL was not available, so
+`createdb` and `npm run db:schema` were not run (the schema and seed SQL did
+run on an in-memory stand-in). The new commits use the GitHub noreply
+author address and no history was rewritten.
+**Commits:** `de593de` — https://github.com/JCalaguas/Bingelog/commit/de593de
+(workspace repo: `bcff955`)
 
 ## Where the AI got it wrong
 
@@ -264,9 +298,9 @@ to edit total episodes, so a wrong or missing total from TVMaze could not be
 corrected.
 **How I found it:** by testing the app, not caught by the AI.
 **Fix:** Claude Code added the total field and the status/episode rules
-(entries 9 and 10). The rules are client-side only, so the same bad state is
-still possible through direct API calls.
-**Commits:** `38575e8`, `7fa9363`
+(entries 9, 10 and 14). The rules are client-side only, so the same bad
+state is still possible through direct API calls.
+**Commits:** `38575e8`, `7fa9363`, `a2c8121`
 
 ## Who wrote what
 
