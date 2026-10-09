@@ -30,7 +30,12 @@ export default function TotalEpisodesField({ value, onChange }) {
   }
 
   return (
-    <FormField label="Total episodes" htmlFor="detail-total" error={error}>
+    <FormField
+      label="Total episodes"
+      htmlFor="detail-total"
+      error={error}
+      hint="Press Enter or click away to apply, then Save."
+    >
       <Input
         id="detail-total"
         type="text"
