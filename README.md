@@ -97,11 +97,22 @@ Open `http://localhost:5173`. The demo banner disappears once real mode is activ
 2. **Add Show** (`/add`) — search TVMaze by title, select a result to import
    its cover and (for ended shows) total episode count, confirm or edit the
    details, and save. If search fails or returns nothing useful, switch to
-   manual entry and fill in the title yourself — total episodes is optional.
-3. **Show Detail** (`/show/:id`) — update status, step the current episode
-   up or down (clamped between 0 and the total, if known), set a 1–5 rating,
-   write notes, save your changes, or delete the show (with a confirmation
-   prompt).
+   manual entry and fill in the title yourself — total episodes is optional, but
+   a show with no total cannot be set to Finished (see Show Detail below).
+3. **Show Detail** (`/show/:id`) — change the current episode with the
+   −/+ buttons or by typing it (capped at the total, if known), edit the total
+   episodes (blank = unknown), set a 1–5 rating, write notes, save your
+   changes, or delete the show (with a confirmation prompt).
+
+   **Status follows progress.** With a known total: 0 is Plan to Watch,
+   anything in between is Watching, and the total is Finished (picking
+   Finished sets the episode to the total, and a Finished show's episode
+   follows the total if it changes). With no total, a show is Plan to Watch at
+   episode 0 and Watching otherwise; the Finished option is disabled with
+   "Set total episodes first", and clearing the total on a Finished show makes
+   it Watching and keeps the episode. Shows are repaired when they load, so an
+   old row like Finished at 0 of 148 shows 148 / 148, and the repair is saved
+   the next time that show is saved.
 
 ### API endpoints
 
@@ -164,8 +175,10 @@ Bingelog/
   connects to Neon as its owner role rather than a limited-permission user.
 - **`mockApi.js` duplicates the server's validation and merge-on-update
   logic**, so the two can drift apart.
-- **Status doesn't auto-update to "Finished"** when the current episode
-  reaches the total — planned, not yet built.
+- **The status/episode rules are enforced in the client only.** The server
+  and `mockApi.js` still accept a Finished show at episode 0 or with no total
+  if the API is called directly, and the Library only repairs how an old row
+  is displayed until that show is opened and saved.
 - **No way to add or change a cover image** outside of what TVMaze returns
   — a cover image URL field is planned for manual entries.
 - Two moderate `npm audit` findings in dev tooling dependencies, not yet

@@ -3,8 +3,8 @@
 This project used ChatGPT for planning, DeepSeek for coding and
 implementation assistance, and Claude (chat and Claude Code) for guidance,
 deployment help, one piece of server code, and the later client work in
-entries 8 to 13 (theme, episode input, status rules, search, login screen,
-deploy config). None of the tools wrote the whole project — see
+entries 8 to 15 (theme, episode input, status rules, search, login screen,
+deploy config, revised status rules, total-field investigation). None of the tools wrote the whole project — see
 "Who wrote what" below for exactly which parts are mine.
 
 ## How I used AI
@@ -127,6 +127,9 @@ rules in `ShowDetailPage.jsx`, and the matching starting episode in
 these rules, so calling the API directly can still save a Finished show at
 episode 0.
 **Checked:** `vite build` passes. Not run in a browser by Claude.
+**Superseded:** the "Finished with no total saves at episode 1" behaviour in
+this entry was replaced by entry 14 (a show with no total can never be
+Finished).
 **Commit:** `7fa9363` — https://github.com/JCalaguas/Bingelog/commit/7fa9363
 
 ### 11. Oct 2026 (worked 2026-10-02) — Claude Code (Sonnet 5.5) — Library search
@@ -160,6 +163,53 @@ or the workflow: `base` already defaults to `/` and the workflow already sets
 (`/assets/...` and `/Bingelog/assets/...`).
 **Not done:** the Vercel deployment itself.
 **Commit:** `c3e4177` — https://github.com/JCalaguas/Bingelog/commit/c3e4177
+
+### 14. Oct 2026 (worked 2026-10-09) — Claude Code (Sonnet 5.5) — A show with no total can never be Finished
+**Asked:** Change the status rules: with no total, Plan to Watch at episode 0
+and Watching otherwise, and the Finished option disabled with the hint "Set
+total episodes first" (Show Detail and Add Show); with a total, the old rule;
+clearing the total on a Finished show makes it Watching and keeps the episode;
+and "Finished means episode = total" applied whenever a show loads or saves
+with a known total, so a row like Hunter x Hunter (Finished, 0 of 148) shows
+148 / 148.
+**Produced:** `normalizeShow()` in `constants.js` (used when the Library and
+Show Detail load a show, and before Show Detail saves), disabled-option support
+in `Select.jsx`, a `hint` prop on `FormField.jsx`, and the rule changes in
+`ShowDetailPage.jsx`, `AddShowPage.jsx`, `AddShowForm.jsx` and
+`ShowDetailPanel.jsx`. This replaces the "Finished with no total saves at
+episode 1" behaviour from entry 10.
+**Checked:** `vite build` passes, and the behaviour was run in headless Chrome
+against demo mode: legacy rows (Finished 0 of 148, Finished with no total)
+display as 148 / 148 and Plan to Watch in the Library, opening and saving the
+first one stores 148; Finished is disabled with the hint when there is no
+total; clearing the total on a Finished show gives Watching with the episode
+kept; Add Show disables Finished until a total is entered and drops it when
+the total is cleared.
+**Limits:** client-side only, so the server and `mockApi.js` still accept the
+old states if the API is called directly, and the Library repairs only how an
+old row is displayed, not the stored row, until that show is opened and saved.
+Not tested against the deployed Render API.
+**Commit:** `a2c8121` — https://github.com/JCalaguas/Bingelog/commit/a2c8121
+
+### 15. Oct 2026 (worked 2026-10-09) — Claude Code (Sonnet 5.5) — Investigating "can't edit total episodes"
+**Asked:** Find out why the Total episodes field on Show Detail could not be
+edited, on localhost and on the Vercel deploy, and fix it.
+**What I (Claude) found:** the field is the one Claude Code wrote in entry 9.
+I could not reproduce a failure. It is imported and rendered (no condition
+hides it, and it is not disabled or read-only), typing works, the value is
+applied on blur and on Enter, and Save sends `totalEpisodes` in the PUT. I ran
+this in headless Chrome against demo mode, and against real mode with the
+actual `server/server.js` and `showsRepo.js` code running on an in-memory
+Postgres stand-in (`pg-mem`): the PUT returned 200 and the new total was
+stored, for an ongoing show, a Watching show and a Finished show.
+**Produced:** only a hint under the field, "Press Enter or click away to apply,
+then Save." The field applies on blur/Enter and nothing else on the page
+visibly changes while typing, which is the most likely thing that looked like
+"can't edit". This is a guess at the cause, not a confirmed fix.
+**Not covered:** the deployed Render API and the live Vercel/localhost pages
+were not tested by Claude. If it still fails there, the browser console error
+and the PUT request/response from the Network tab are needed.
+**Commit:** `0d0e3aa` — https://github.com/JCalaguas/Bingelog/commit/0d0e3aa
 
 ## Where the AI got it wrong
 
