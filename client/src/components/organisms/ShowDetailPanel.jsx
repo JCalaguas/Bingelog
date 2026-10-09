@@ -6,6 +6,7 @@ import Button from '../atoms/Button';
 import EpisodeStepper from '../EpisodeStepper';
 import ProgressIndicator from '../molecules/ProgressIndicator';
 import RatingInput from '../molecules/RatingInput';
+import TotalEpisodesField from '../molecules/TotalEpisodesField';
 import { STATUSES } from '../../constants';
 import styles from './ShowDetailPanel.module.css';
 
@@ -52,6 +53,11 @@ export default function ShowDetailPanel({
             onChange={(value) => onChange('currentEpisode', value)}
           />
         </FormField>
+
+        <TotalEpisodesField
+          value={show.totalEpisodes ?? null}
+          onChange={(value) => onChange('totalEpisodes', value)}
+        />
 
         <ProgressIndicator current={show.currentEpisode} total={show.totalEpisodes} />
 
