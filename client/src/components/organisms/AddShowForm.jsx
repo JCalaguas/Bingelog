@@ -34,7 +34,12 @@ export default function AddShowForm({
 }) {
   const showResults = searchLoading || searchError || results !== null;
 
-  const statusOptions = STATUSES.map((value) => ({ value, label: value }));
+  const hasTotal = totalEpisodes.trim() !== '';
+  const statusOptions = STATUSES.map((value) => ({
+    value,
+    label: value,
+    disabled: value === 'Finished' && !hasTotal,
+  }));
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -99,7 +104,11 @@ export default function AddShowForm({
             />
           </FormField>
 
-          <FormField label="Status" htmlFor="add-status">
+          <FormField
+            label="Status"
+            htmlFor="add-status"
+            hint={hasTotal ? null : 'Set total episodes first.'}
+          >
             <Select
               id="add-status"
               value={status}

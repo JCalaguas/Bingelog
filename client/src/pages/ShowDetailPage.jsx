@@ -6,7 +6,7 @@ import LoadingState from '../components/molecules/LoadingState';
 import ErrorState from '../components/molecules/ErrorState';
 import EmptyState from '../components/molecules/EmptyState';
 import ShowDetailPanel from '../components/organisms/ShowDetailPanel';
-import { statusFromProgress } from '../constants';
+import { normalizeShow, statusFromProgress } from '../constants';
 import styles from './ShowDetailPage.module.css';
 
 const FIELDS = [
@@ -44,7 +44,9 @@ export default function ShowDetailPage() {
       .get(id)
       .then((data) => {
         if (!cancelled) {
-          setDraft(data);
+          // The draft is repaired (e.g. Finished 0 of 148 -> 148 of 148); the
+          // original stays as stored, so Save sends the repair.
+          setDraft(normalizeShow(data));
           setOriginal(data);
         }
       })
@@ -68,19 +70,23 @@ export default function ShowDetailPage() {
         next.status = statusFromProgress(value, next.totalEpisodes);
       }
       if (field === 'totalEpisodes') {
-        if (previous.status === 'Finished') {
+        if (value == null) {
+          // No total means never Finished: the status follows the episode, which is kept.
+          next.status = statusFromProgress(next.currentEpisode, null);
+        } else if (previous.status === 'Finished') {
           // A finished show stays finished: its episode follows the new total.
-          if (value != null) next.currentEpisode = value;
+          next.currentEpisode = value;
         } else {
           // The episode can never be past the end, so a smaller total pulls it back.
-          if (value != null && next.currentEpisode > value) next.currentEpisode = value;
+          if (next.currentEpisode > value) next.currentEpisode = value;
           next.status = statusFromProgress(next.currentEpisode, value);
         }
       }
       if (field === 'status' && value === 'Finished') {
-        // A finished show has watched every episode: the total if known, else
-        // at least episode 1.
-        next.currentEpisode = next.totalEpisodes ?? Math.max(next.currentEpisode, 1);
+        // Not allowed without a total (the option is disabled too).
+        if (!next.totalEpisodes) return previous;
+        // A finished show has watched every episode.
+        next.currentEpisode = next.totalEpisodes;
       }
       return next;
     });
@@ -89,10 +95,11 @@ export default function ShowDetailPage() {
   const handleSave = async () => {
     setSaveLoading(true);
     setSaveError(null);
+    const toSave = normalizeShow(draft);
     const payload = {};
     for (const field of FIELDS) {
-      if (draft[field] !== original[field]) {
-        payload[field] = draft[field];
+      if (toSave[field] !== original[field]) {
+        payload[field] = toSave[field];
       }
     }
     try {

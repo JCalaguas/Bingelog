@@ -19,7 +19,12 @@ export default function ShowDetailPanel({
   deleteLoading,
   errors = {},
 }) {
-  const statusOptions = STATUSES.map((value) => ({ value, label: value }));
+  const hasTotal = !!show.totalEpisodes;
+  const statusOptions = STATUSES.map((value) => ({
+    value,
+    label: value,
+    disabled: value === 'Finished' && !hasTotal,
+  }));
 
   return (
     <div className={styles.panel}>
@@ -37,7 +42,11 @@ export default function ShowDetailPanel({
         <h2 className={styles.title}>{show.title}</h2>
         <StatusBadge status={show.status} />
 
-        <FormField label="Status" htmlFor="detail-status">
+        <FormField
+          label="Status"
+          htmlFor="detail-status"
+          hint={hasTotal ? null : 'Set total episodes first.'}
+        >
           <Select
             id="detail-status"
             value={show.status}

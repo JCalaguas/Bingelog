@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { showsApi } from '../api';
+import { normalizeShow } from '../constants';
 import Button from '../components/atoms/Button';
 import LibrarySearch from '../components/molecules/LibrarySearch';
 import StatusFilter from '../components/molecules/StatusFilter';
@@ -23,7 +24,7 @@ export default function LibraryPage() {
     showsApi
       .list(filter)
       .then((data) => {
-        if (!cancelled) setShows(data);
+        if (!cancelled) setShows(data.map(normalizeShow));
       })
       .catch((err) => {
         if (!cancelled) setError(err.message);

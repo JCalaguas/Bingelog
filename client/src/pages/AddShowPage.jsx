@@ -48,11 +48,18 @@ export default function AddShowPage() {
       setSelected(show);
       setTitle(show.title);
       setTotalEpisodes(show.totalEpisodes != null ? String(show.totalEpisodes) : '');
+      if (show.totalEpisodes == null) setStatus((s) => (s === 'Finished' ? 'Watching' : s));
     } catch (err) {
       setSearchError(err.message);
     } finally {
       setSelectedLoading(false);
     }
+  };
+
+  const handleTotalChange = (value) => {
+    setTotalEpisodes(value);
+    // Finished needs a known total, so clearing it drops Finished.
+    if (value.trim() === '' && status === 'Finished') setStatus('Watching');
   };
 
   const handleManual = () => {
@@ -72,17 +79,18 @@ export default function AddShowPage() {
 
     const total = totalEpisodes === '' ? null : Number(totalEpisodes);
 
-    // Keep status and progress consistent. Only Plan to Watch sits at episode 0.
-    // A finished show has watched every episode (the total, once it is known;
-    // until then 1, and it syncs to the total when one is entered later).
+    // Keep status and progress consistent. Only Plan to Watch sits at episode 0,
+    // and a show with no total can never be Finished (the option is disabled,
+    // this is a safety net).
+    const finalStatus = status === 'Finished' && total === null ? 'Watching' : status;
     const currentEpisode =
-      status === 'Finished' ? (total ?? 1) : status === 'Watching' ? 1 : 0;
+      finalStatus === 'Finished' ? total : finalStatus === 'Watching' ? 1 : 0;
 
     setSaveLoading(true);
 
     const payload = {
       title: title.trim(),
-      status,
+      status: finalStatus,
       currentEpisode,
       totalEpisodes: total,
       coverUrl: selected?.coverUrl ?? null,
@@ -116,7 +124,7 @@ export default function AddShowPage() {
         title={title}
         onTitleChange={setTitle}
         totalEpisodes={totalEpisodes}
-        onTotalEpisodesChange={setTotalEpisodes}
+        onTotalEpisodesChange={handleTotalChange}
         status={status}
         onStatusChange={setStatus}
         onSave={handleSave}
