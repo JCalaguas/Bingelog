@@ -456,47 +456,115 @@ responses (entry 17).
 
 ## Who wrote what
 
-**`client/src/components/EpisodeStepper.jsx` and
-`EpisodeStepper.module.css`** — originally written by me, not DeepSeek, then
-partly rewritten by Claude Code on 2026-10-05 (commit `38575e8`). The `-`/`+`
-buttons and the limit logic (`value > 0`, and the `total == null` check)
-are my original code and are kept. Claude Code added the typed number input
-(a text draft that is applied on blur or Enter, capped at the total, with
+### How much of the code is mine (measured, and below the target)
+
+The course target is that at least a fifth (20 percent) of the project is code I
+wrote myself. **My share is below that target.** I measured it on 2026-10-09
+by counting lines in `client/src` and `server` (`.js`, `.jsx`, `.css`, `.html`;
+no lockfiles, JSON, SQL or images), blank lines included, and using `git blame`
+to see which lines still exist in my parts:
+
+| Code I wrote, as it exists now | Lines |
+|---|---|
+| `client/src/components/EpisodeStepper.jsx` (my 30 surviving lines) | 30 |
+| `client/src/components/EpisodeStepper.module.css` (my 37 surviving lines) | 37 |
+| Server hardening in `server/server.js`, commit `a35de20` | 49 |
+| **Total** | **116** |
+
+- **Total app code:** 3,290 lines (2,764 in `client/src`, 526 in `server`).
+- **My share:** 116 of 3,290 is **3.5 percent**.
+- **Without the rate limiter block** (17 lines adapted from a Claude snippet):
+  99 lines, about 3.0 percent.
+- **Counting my original `EpisodeStepper` before Claude Code rewrote it**
+  (57 + 37 lines) plus the 49 hardening lines: 143 lines, **4.3 percent**.
+
+The rest of the code was written by DeepSeek or by Claude Code (entries 1 to 18
+above say which). I am not claiming a bigger share than this. What I can show is
+the parts I did write and that I can explain, below.
+
+### 1. `EpisodeStepper` (my original component)
+
+**Files:** `client/src/components/EpisodeStepper.jsx` and
+`client/src/components/EpisodeStepper.module.css`.
+**Commits (original version):** `dea3e7c` (component logic) — https://github.com/JCalaguas/Bingelog/commit/dea3e7c,
+`bc7581a` (styles; I forgot to save the CSS file before the first commit, so it
+went in empty and this commit added the actual styles) — https://github.com/JCalaguas/Bingelog/commit/bc7581a, and
+`9aa9391` (small follow-up: `color` and `border-radius` from the design
+tokens) — https://github.com/JCalaguas/Bingelog/commit/9aa9391.
+**Who wrote what in it now:** originally written by me, not DeepSeek, then partly
+rewritten by Claude Code on 2026-10-05 (commit `38575e8` — https://github.com/JCalaguas/Bingelog/commit/38575e8). The
+`-`/`+` buttons and the limit logic (`value > 0`, and the `total == null`
+check) are my original code and are kept. Claude Code added the typed number
+input (a text draft that is applied on blur or Enter, capped at the total, with
 non-digits reverted), a `useEffect` that keeps the draft in sync with the real
 value, the `/ total` label, the proper `−` sign, and the input styles. It also
-dropped my explanatory code comments when it rewrote the file. So the
-component is now a mix, and the explanation below describes my original
-version only.
+dropped my explanatory code comments when it rewrote the file.
 
-In my own words: this component shows the current episode number with
-`-`/`+` buttons. It's a controlled component — it holds no state of its
-own, it just receives `value`, `total` and an `onChange` callback from its
-parent (`ShowDetailPanel`) and calls `onChange` with the new number. The
-tricky part was that `total` can be `null` for an ongoing show with no
-known episode count, so the decrement button is disabled at 0
-(`value > 0`), but the increment button only compares against `total`
-when `total` isn't `null` — otherwise it would try to compare a number
-against `null`, which doesn't mean what you'd expect. I used
-`total == null` (loose equality, so it also catches `undefined`) to short
-circuit that comparison before it happens.
-**Commits (original version):** `dea3e7c` (component logic), `bc7581a` (styles — I forgot to
-save the CSS file before the first commit, so it went in empty; this
-commit added the actual styles), `9aa9391` (small follow-up: added
-`color`/`border-radius` from the design tokens).
+In my own words (written 2026-10-09, recorded as I wrote it):
 
-**AI-written piece explained in my own words — the `PUT` merge fix
-(`server/server.js`, commit `d6f93c0`):** DeepSeek's fix loads the
-existing show from the database, then builds a merged object where each
-field checks `body.field !== undefined ? body.field : current.field`.
-The reason it's `!== undefined` and not `??` (nullish coalescing) matters:
-`??` treats both a missing field and an explicit `null` the same way — it
-falls back to the old value either way. But `null` can be a real,
-intentional value here — for example, clearing a show's rating by sending
-`{"rating": null}`. If the merge used `??`, you could never un-rate a
-show through a partial update, because the `null` would just be ignored
-and the old rating would come back. `!== undefined` only falls back when
-the field was left out of the request entirely, so an explicit `null`
-still gets through and clears the field.
+> The decrement is disabled when value is 0 because the episode count should not
+> go below zero. For the increment, I check total == null first because some
+> shows do not have a known total episode count. If the total is unknown, the
+> user can keep increasing the episode count. If the total is known, the value
+> cannot go higher than that total. I used == null because it checks for both
+> null and undefined.
+
+### 2. Server hardening in `server/server.js` (typed by me)
+
+**Commit:** `a35de20` — https://github.com/JCalaguas/Bingelog/commit/a35de20. Entry 17 above has the full account,
+including which part came from a Claude snippet and which bugs the reviews
+caught.
+**Which lines are which:** I typed all 49 lines. The rate limiter's
+configuration and its 429 handler (about 17 lines) were adapted from a snippet
+Claude gave me in chat. `helmet`, `trust proxy`, the length limits, the two
+Finished rules and the `currentEpisode` NaN check were described to me in words
+and written by me.
+
+In my own words (written 2026-10-09, recorded as I wrote it):
+
+**`helmet()`** (`app.use(helmet())`, line 27):
+
+> helmet() adds security-related HTTP headers to the server's responses. These
+> headers help protect the app from some common web attacks by telling browsers
+> how to handle the responses. I placed it near the top so it applies to
+> requests before they reach the routes, instead of having to add it to each
+> route separately.
+
+**Field length limits** (title 200, notes 2000, `coverUrl` 2048, in `validateShow()`):
+
+> I added these limits to prevent users from sending unnecessarily long inputs
+> that could take up too much space or cause problems with the API. I used 200
+> characters for the title because show titles should be relatively short, 2000
+> for notes because users may need more space to write their thoughts, and 2048
+> for the cover URL because links can be longer than regular text. Each limit
+> depends on how that field is supposed to be used.
+
+**Rate limiter order and options** (`authLimiter`, `skipSuccessfulRequests`,
+`requestWasSuccessful`):
+
+> The rate limiter needs to come before the auth check so it can count login
+> attempts before the server checks the password. Otherwise, failed attempts
+> might not be counted properly. skipSuccessfulRequests: true means successful
+> requests are not supposed to count toward the limit. The requestWasSuccessful
+> function checks the response status and treats anything other than 401 as
+> successful, so incorrect passwords count toward the limit while other
+> responses do not.
+
+### 3. The one AI-written piece I understand best: the `PUT` merge fix
+
+**File:** `server/server.js`. **Commit:** `d6f93c0` — https://github.com/JCalaguas/Bingelog/commit/d6f93c0. DeepSeek wrote
+this fix: it loads the existing show from the database and builds a merged
+object where each field is `body.field !== undefined ? body.field :
+current.field`.
+
+In my own words (written 2026-10-09, recorded as I wrote it):
+
+> I used body.field !== undefined ? body.field : current.field because I need to
+> tell the difference between a field that was not included and a field that was
+> intentionally set to null. If the field is missing, the existing value stays
+> the same. If the field is explicitly null, it can clear the value, like
+> removing a show's rating. Using ?? would treat both null and undefined as
+> missing, so it would not allow me to clear the field that way.
 
 ## Personal contribution
 
