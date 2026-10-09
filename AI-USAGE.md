@@ -7,16 +7,33 @@ entries 8 to 16 (theme, episode input, status rules, search, login screen,
 deploy config, revised status rules, total-field investigation, docs). Entry 17 covers server changes I wrote with Claude's help (the rate-limiter configuration was adapted from a Claude snippet), and entry 18 is a small CSS change Claude Code wrote. None of the tools wrote the whole project — see
 "Who wrote what" below for exactly which parts are mine.
 
+## ChatGPT (planning only)
+
+*This is my wording from 28 September 2026, moved here unchanged from the
+workspace copy of this file.*
+
+ChatGPT was used for project planning only:
+
+- comparing project ideas and choosing BingeLog
+- proposal planning (`BingeLog-M6A1-Proposal.md`)
+- wireframe planning (`m6a2/BingeLog-M6A2-Wireframes.*`)
+- design-system planning (`m6a3/BingeLog-M6A3-Design-System.*`)
+- implementation planning and review
+
+ChatGPT did not write the application code.
+
 ## How I used AI
 
 ### 1. 2026-09-23 — DeepSeek — Backend foundation
 **Asked:** Set up Express + PostgreSQL connection, create the `shows`
 table schema, and scaffold the server structure.
 **Produced:** `server/app.js`, `server/db.js`, `database/schema.sql`,
-initial `database/setup.js`.
+initial `database/setup.js`, and the early `package.json`, `.gitignore` and
+`.env.example`.
 **Kept:** The schema and connection setup, largely as generated.
 **Changed:** Nothing major at this stage.
-**Commit:** local repo `8e47790`, `9916870` (this early local repo was
+**Commit:** local repo `cd52939` (`package.json`, `.gitignore`,
+`.env.example`), `8e47790`, `9916870` (this early local repo was
 never pushed publicly — see note at the end of this file).
 
 ### 2. 2026-09-23 — DeepSeek — Shows REST endpoints
@@ -307,9 +324,7 @@ not enforce the status rules. A direct API update to an old row that breaks the
 rules is rejected until the row is repaired.
 **Attribution:** the commit carries a `Co-Authored-By: Claude` line that Claude
 Code added by default, and its body says "Written by me with Claude Code's
-guidance and review". (CONFIRM: that this is the attribution you want for code
-you wrote yourself. One review argued the line is accurate because of the
-snippet and the review above, but it is your decision.)
+guidance and review". I decided to keep the line.
 **Commit:** `a35de20` (committed 2026-10-09 18:49 +0800) — https://github.com/JCalaguas/Bingelog/commit/a35de20
 
 ### 18. Oct 2026 (worked 2026-10-09) — Claude Code (Sonnet 5.5) — Two-column Library on phones
