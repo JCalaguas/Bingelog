@@ -6,6 +6,7 @@ import LoadingState from '../components/molecules/LoadingState';
 import ErrorState from '../components/molecules/ErrorState';
 import EmptyState from '../components/molecules/EmptyState';
 import ShowDetailPanel from '../components/organisms/ShowDetailPanel';
+import { statusFromProgress } from '../constants';
 import styles from './ShowDetailPage.module.css';
 
 const FIELDS = [
@@ -61,7 +62,28 @@ export default function ShowDetailPage() {
   }, [id, reloadKey]);
 
   const handleChange = (field, value) => {
-    setDraft((previous) => ({ ...previous, [field]: value }));
+    setDraft((previous) => {
+      const next = { ...previous, [field]: value };
+      if (field === 'currentEpisode') {
+        next.status = statusFromProgress(value, next.totalEpisodes);
+      }
+      if (field === 'totalEpisodes') {
+        if (previous.status === 'Finished') {
+          // A finished show stays finished: its episode follows the new total.
+          if (value != null) next.currentEpisode = value;
+        } else {
+          // The episode can never be past the end, so a smaller total pulls it back.
+          if (value != null && next.currentEpisode > value) next.currentEpisode = value;
+          next.status = statusFromProgress(next.currentEpisode, value);
+        }
+      }
+      if (field === 'status' && value === 'Finished') {
+        // A finished show has watched every episode: the total if known, else
+        // at least episode 1.
+        next.currentEpisode = next.totalEpisodes ?? Math.max(next.currentEpisode, 1);
+      }
+      return next;
+    });
   };
 
   const handleSave = async () => {

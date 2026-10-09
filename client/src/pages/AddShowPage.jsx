@@ -68,13 +68,23 @@ export default function AddShowPage() {
   };
 
   const handleSave = async () => {
-    setSaveLoading(true);
     setSaveError(null);
+
+    const total = totalEpisodes === '' ? null : Number(totalEpisodes);
+
+    // Keep status and progress consistent. Only Plan to Watch sits at episode 0.
+    // A finished show has watched every episode (the total, once it is known;
+    // until then 1, and it syncs to the total when one is entered later).
+    const currentEpisode =
+      status === 'Finished' ? (total ?? 1) : status === 'Watching' ? 1 : 0;
+
+    setSaveLoading(true);
 
     const payload = {
       title: title.trim(),
       status,
-      totalEpisodes: totalEpisodes === '' ? null : Number(totalEpisodes),
+      currentEpisode,
+      totalEpisodes: total,
       coverUrl: selected?.coverUrl ?? null,
       externalId: selected?.externalId ?? null,
     };
