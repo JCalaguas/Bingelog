@@ -4,7 +4,7 @@ This project used ChatGPT for planning, DeepSeek for coding and
 implementation assistance, and Claude (chat and Claude Code) for guidance,
 deployment help, one piece of server code, and the later client work in
 entries 8 to 16 (theme, episode input, status rules, search, login screen,
-deploy config, revised status rules, total-field investigation, docs). Entry 17 is guidance and review on server changes I wrote myself, and entry 18 is a small CSS change Claude Code wrote. None of the tools wrote the whole project — see
+deploy config, revised status rules, total-field investigation, docs). Entry 17 covers server changes I wrote with Claude's help (the rate-limiter configuration was adapted from a Claude snippet), and entry 18 is a small CSS change Claude Code wrote. None of the tools wrote the whole project — see
 "Who wrote what" below for exactly which parts are mine.
 
 ## How I used AI
@@ -245,49 +245,74 @@ author address and no history was rewritten.
 **Commits:** `de593de` — https://github.com/JCalaguas/Bingelog/commit/de593de
 (workspace repo: `bcff955`)
 
-### 17. Oct 2026 (worked 2026-10-09, CONFIRM the date) — Claude Code (Sonnet 5.5) — Guidance and review for server hardening I wrote myself
-**What this entry is:** `server/server.js` hardening that I wrote myself with
-Claude Code's guidance. Claude Code reviewed it and ran tests; it did not write
-the changes. (CONFIRM: which lines you typed yourself and which, if any, you
-pasted from a suggestion. The comments in the rate limiter section read like
-they may have come from a suggestion.)
+### 17. Oct 2026 (worked 2026-10-09) — Claude (chat, a review note, and Claude Code) — Server hardening I wrote with Claude's help
+**What this entry is:** the `server/server.js` hardening below. I typed and
+integrated all of it myself, but part of it was adapted from Claude's output;
+the section "Who wrote what in this change" says which parts. Claude Code (the
+command-line tool) did not write any of the changes. It ran the tests under
+"Checked".
 **What the changes are:** `helmet()` and `trust proxy` set to 1; length limits
 (title 200, notes 2000, cover URL 2048); the Finished rules in `validateShow()`
 (a Finished show needs a known total, and its episode must equal the total);
 a `currentEpisode` check that rejects NaN (from `"abc"` or `""`); and a login
 rate limiter (20 failed attempts per IP per 15 minutes, mounted before the auth
 check so a blocked IP gets 429 even with the correct password).
-**What the review caught:** two bugs in my first attempt, per your notes
-(CONFIRM both): the `requestWasSuccessful` option did nothing without
-`skipSuccessfulRequests`, and a dropped `currentEpisode === undefined` guard.
-Separately, an earlier test run on an earlier version of the file (CONFIRM the
-date and that this is a different version) found that the limiter only ran on
-the failure path, so the correct password still got through after the limit,
-and that `currentEpisode: "abc"` returned a 500. Both were fixed in the version
-that was committed.
-**Checked (by Claude Code, on 2026-10-09 — CONFIRM):** a copy of the committed
-`server.js` run against an in-memory database with `AUTH_USER=test` and
-`AUTH_PASS=test`. 21 wrong passwords gave 20 × 401 then 429, and the correct
-password after that gave 429; 30 sequential successful requests gave 30 × 200;
-one character over each length limit gave 400 and the exact limits gave 201;
-`currentEpisode` of `"abc"` and `""` gave 400; Finished with no total and
-Finished with a mismatched episode gave 400, and Finished 12 of 12 gave 201
-(then deleted); and the real-mode client against it could log in, create, edit
-(including notes-only and rating-only updates), change the total and delete.
-**Not tested / limits:** the deployed Render API and the real Postgres
-database were not tested when this was written. The counter is in memory and
-keyed by IP, so it resets on a restart and one person's failed attempts block
-others behind the same address. `trust proxy` of 1 is unverified against
-Render's real setup. `mockApi.js` (demo mode) does not enforce the status
-rules. Old stored rows that break the rules are rejected by direct API updates
-until they are repaired (CONFIRM whether the two affected Neon rows have been
-fixed).
+**Who wrote what in this change:**
+- Adapted from a code snippet Claude gave me in chat: the rate limiter's
+  configuration (the import, `windowMs`, `limit`, `standardHeaders`,
+  `legacyHeaders`), its 429 handler, and the way a failed login calls the
+  limiter and then sends the 401. The committed handler and 401 blocks closely
+  follow that snippet. This file does not record how much of it I pasted and
+  how much I retyped.
+- From a review note, not from code: mounting the limiter before the auth
+  check, and using `requestWasSuccessful` to count only 401 responses.
+- Described to me in words only, and written by me: the length limits, the two
+  Finished rules, `helmet` (pointed at the snippet already in
+  `docs/06-security-and-privacy.md`), `trust proxy`, the
+  `skipSuccessfulRequests` fix, and the `currentEpisode` NaN check.
+**What the reviews caught (two rounds, two different versions of my file):**
+- *Version 1* (limiter only on the failure path; `currentEpisode === undefined
+  || < 0` check): after 20 wrong guesses the correct password still got a 200,
+  and `currentEpisode: "abc"` became NaN and returned a 500. A test run by
+  Claude Code and the review note both found this. An earlier Claude review had
+  called the failure-path-only limiter "the correct pattern", which was wrong
+  (see "Where the AI got it wrong").
+- *Version 2* (my fix for version 1) introduced two new bugs. The
+  `requestWasSuccessful` option did nothing without `skipSuccessfulRequests`:
+  in `express-rate-limit` v8 it is only read when `skipSuccessfulRequests` or
+  `skipFailedRequests` is on, so every request counted and nothing was ever
+  refunded. And the `currentEpisode === undefined` guard had been dropped:
+  `""` becomes `undefined`, and `Number.isNaN(undefined)` and `undefined < 0`
+  are both false, so `""` slipped through.
+- The committed version closes both families: `skipSuccessfulRequests: true`,
+  and `currentEpisode === undefined || Number.isNaN(currentEpisode) ||
+  currentEpisode < 0`.
+**Checked (by Claude Code, 2026-10-09):** a copy of the committed `server.js`
+run against an in-memory database with `AUTH_USER=test` and `AUTH_PASS=test`.
+21 wrong passwords gave 20 × 401 then 429, and the correct password after that
+gave 429; 30 sequential successful requests gave 30 × 200; one character over
+each length limit gave 400 and the exact limits gave 201; `currentEpisode` of
+`"abc"` and `""` gave 400; Finished with no total and Finished with a
+mismatched episode gave 400, and Finished 12 of 12 gave 201 (then deleted); and
+the real-mode client against it could log in, create, edit (including
+notes-only and rating-only updates), change the total and delete.
+**Not tested / limits:** the real Postgres database was not part of that test
+run. After the deploy, a read-only check of the live API on 2026-10-09 showed
+no stored row that breaks the Finished rule (for example Hunter x Hunter is
+stored as 148 of 148); this does not say how any old row was fixed. The
+counter is in memory and keyed by IP, so it resets on a restart and one
+person's failed attempts block others behind the same address. `trust proxy`
+of 1 is unverified against Render's real setup. `mockApi.js` (demo mode) does
+not enforce the status rules. A direct API update to an old row that breaks the
+rules is rejected until the row is repaired.
 **Attribution:** the commit carries a `Co-Authored-By: Claude` line that Claude
-Code added by default. (CONFIRM this is the attribution you want for code you
-wrote yourself.)
-**Commit:** `a35de20` — https://github.com/JCalaguas/Bingelog/commit/a35de20
+Code added by default, and its body says "Written by me with Claude Code's
+guidance and review". (CONFIRM: that this is the attribution you want for code
+you wrote yourself. One review argued the line is accurate because of the
+snippet and the review above, but it is your decision.)
+**Commit:** `a35de20` (committed 2026-10-09 18:49 +0800) — https://github.com/JCalaguas/Bingelog/commit/a35de20
 
-### 18. Oct 2026 (worked 2026-10-09, CONFIRM the date) — Claude Code (Sonnet 5.5) — Two-column Library on phones
+### 18. Oct 2026 (worked 2026-10-09) — Claude Code (Sonnet 5.5) — Two-column Library on phones
 **Asked:** On a 375px phone each Library card was so tall that one cover filled
 the screen. Make a small CSS-only change so at least two shows are visible
 without scrolling, without changing behaviour, and check 320px, 375px and
@@ -307,7 +332,7 @@ tops of two cards are visible but no card is fully on screen. With the demo
 banner showing on a phone, the banner alone pushes the cards below the fold.
 Not looked at on a real phone, and not checked on the live Vercel site after
 the deploy.
-**Commit:** `1ab3cea` — https://github.com/JCalaguas/Bingelog/commit/1ab3cea
+**Commit:** `1ab3cea` (committed 2026-10-09 19:26 +0800) — https://github.com/JCalaguas/Bingelog/commit/1ab3cea
 
 ## Where the AI got it wrong
 
@@ -365,6 +390,17 @@ corrected.
 (entries 9, 10 and 14). The rules are client-side only, so the same bad
 state is still possible through direct API calls.
 **Commits:** `38575e8`, `7fa9363`, `a2c8121`
+
+### 5. A review called a limiter that let the right password through "the correct pattern" (found 2026-10-09)
+**What happened:** In a first review of my rate limiter, Claude described the
+failure-path-only pattern (the limiter is only called after a failed login) as
+the correct one. It is not: after 20 wrong guesses the correct password still
+returned a 200, so an attacker's right guess was never blocked.
+**How it was found:** a later review note, and then a test run by Claude Code,
+both showed the correct password getting through after the limit.
+**Fix:** I mounted the limiter before the auth check and counted only 401
+responses (entry 17).
+**Commit:** `a35de20`
 
 ## Who wrote what
 
