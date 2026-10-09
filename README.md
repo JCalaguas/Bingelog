@@ -86,7 +86,19 @@ npm run dev
 ```
 Open `http://localhost:5173`. The demo banner disappears once real mode is active.
 
+**Logging in (real mode only).** In real mode the app shows a login screen
+before anything else. The username and password are the `AUTH_USER` and
+`AUTH_PASS` values set on the server (in the host's environment settings, or in
+`server/.env` when you run it yourself). They are not in this repository. If
+both are left unset on a local server, any username and password is accepted.
+The app checks the login with a real request before it unlocks, keeps it in
+`sessionStorage` only (it is gone when you close the tab), and never puts it in
+the built JavaScript. A **Log out** button appears in the header. Demo mode has
+no login.
+
 **Live demo:** https://jcalaguas.github.io/Bingelog/ (GitHub Pages, demo mode only, browser `localStorage` data, no real backend)
+
+**Live, real mode:** https://bingelog-nu.vercel.app (Vercel, talks to the deployed API below, so it asks for a login; the login is not published here)
 
 **Deployed API:** https://bingelog-6un8.onrender.com — Express on Render (free tier, so the first request after idle takes ~30 seconds) with PostgreSQL on Neon. Every route except `/healthz` and `/readyz` is behind HTTP Basic Auth; the Pages demo does not call it, because anything in a `VITE_*` variable is public.
 
@@ -143,8 +155,10 @@ Bingelog/
 │ └── src/
 │ ├── api/ # index.js switches between mockApi.js (demo) and httpApi.js (real)
 │ ├── components/ # atoms, molecules, organisms, layout
-│ ├── pages/ # LibraryPage, AddShowPage, ShowDetailPage
-│ └── styles/global.css # M6A3 design tokens
+│ ├── hooks/ # useLoggedIn
+│ ├── pages/ # LibraryPage, AddShowPage, ShowDetailPage, LoginPage
+│ └── styles/global.css # design tokens (dark grey theme)
+│ vercel.json # single-page-app rewrite for Vercel
 ├── server/ # Express + PostgreSQL backend
 │ ├── server.js # routes, validation, error handling
 │ ├── showsRepo.js # parameterized queries
@@ -156,20 +170,41 @@ Bingelog/
 
 ## Screenshots
 
-*(Demo mode, taken 28 Sep 2026)*
+*Taken 9 Oct 2026. The demo-mode screenshots use the invented demo data. The
+two real-mode screenshots were taken against a local copy of the API with the
+same invented seed data, not against the deployed server.*
 
-![Library](docs/screenshots/01-library.png)
-![Add Show — search results](docs/screenshots/04-addshow.png)
-![Show Detail](docs/screenshots/05-showdetails.png)
-![Validation error](docs/screenshots/07-notitle.png)
-![Delete confirmation](docs/screenshots/08-delete.png)
-![Mobile layout, 375px](docs/screenshots/09-375px.png)
+**Library (demo mode)**
+
+![Library](docs/screenshots/library-demo.png)
+
+**Add Show: search TVMaze, pick a result, confirm (demo mode)**
+
+![Add Show](docs/screenshots/add-show.png)
+
+**Show Detail: type the episode, edit the total, status follows progress (demo mode)**
+
+![Show Detail](docs/screenshots/show-detail.png)
+
+**Show Detail with no total: Finished is unavailable (demo mode)**
+
+![Show Detail, no total](docs/screenshots/show-detail-no-total.png)
+
+**Phone layout, 375px (demo mode)**
+
+![Mobile layout, 375px](docs/screenshots/library-mobile-375.png)
+
+**Real mode: login screen, then the library**
+
+![Login](docs/screenshots/login-real-mode.png)
+![Library in real mode](docs/screenshots/library-real-mode.png)
 
 ## Known issues and next steps
 
 - **Access gate is a single shared login.** HTTP Basic Auth protects the
-  deployed API (one username and password from environment variables). There
-  are no per-user accounts and no rate limiting on failed logins. The public
+  deployed API (one username and password from environment variables), and
+  the real-mode client asks for it on a login screen. There are no per-user
+  accounts and no rate limiting on failed logins. The public
   Pages demo is unprotected on purpose: it only holds browser-local mock data.
 - **Free-tier hosting.** The Render service sleeps when idle, and the API
   connects to Neon as its owner role rather than a limited-permission user.
@@ -183,9 +218,22 @@ Bingelog/
   — a cover image URL field is planned for manual entries.
 - Two moderate `npm audit` findings in dev tooling dependencies, not yet
   addressed.
-- Visual polish (hover states, transitions, empty-state illustration) is
-  intentionally minimal for now; the M6A3 tokens are implemented but the
-  app is functionally, not visually, complete.
+- **Layout rough edges.** On a phone each Library card is full width and about
+  500px tall, so you scroll a long way; the status badge stretches across the
+  whole row on Show Detail; and the episode only saves when you press Save
+  (leaving with Back discards it).
+- **Design docs are behind the app.** The M6A3 design-system document still
+  describes the light palette and a single system font; the app now uses a
+  dark grey palette and Playfair Display for cover fallbacks.
+- Hover states, transitions and an empty-state illustration are intentionally
+  minimal.
+
+## Credits
+
+- Show titles, covers and episode counts come from the
+  [TVMaze API](https://www.tvmaze.com/api) (data licensed CC BY-SA 4.0).
+- The cover-fallback typeface is Playfair Display (SIL Open Font License),
+  loaded from Google Fonts.
 
 ## AI usage
 
