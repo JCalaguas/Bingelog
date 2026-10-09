@@ -1,5 +1,7 @@
 # BingeLog
 
+[![Made with AI](https://img.shields.io/badge/Made_with-AI_assistance-blue)](AI-USAGE.md)
+
 A personal tracker for anime and TV shows. Search for a title, import its
 metadata, and keep track of your own progress, status, rating and notes —
 without recommendations, social features, or accounts.
@@ -253,9 +255,7 @@ same invented seed data, not against the deployed server.*
 
 ## AI usage
 
-AI credit: ChatGPT was used for planning, DeepSeek generated most of the
-server and client code in prompted steps, and Claude gave guidance and wrote
-the Basic Auth middleware. I wrote `EpisodeStepper` myself.
+AI credit: DeepSeek generated most of the first server and client code. Claude Code wrote the dark theme, the login and Basic Auth, the status rules, the search, the CSS and the docs. A Claude snippet was the starting point for the rate limiter. ChatGPT was used for planning only. I wrote `EpisodeStepper` myself and typed the server hardening changes, with Claude's guidance.
 See [`AI-USAGE.md`](AI-USAGE.md) for the full disclosure, including what
 was AI-written, what I wrote myself, and real cases where the AI got it
 wrong.

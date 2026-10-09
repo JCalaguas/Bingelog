@@ -33,8 +33,8 @@ initial `database/setup.js`, and the early `package.json`, `.gitignore` and
 **Kept:** The schema and connection setup, largely as generated.
 **Changed:** Nothing major at this stage.
 **Commit:** local repo `cd52939` (`package.json`, `.gitignore`,
-`.env.example`), `8e47790`, `9916870` (this early local repo was
-never pushed publicly — see note at the end of this file).
+`.env.example`), `8e47790`, `9916870` — early local repo, not pushed, no link
+available (see the note at the end of this file).
 
 ### 2. 2026-09-23 — DeepSeek — Shows REST endpoints
 **Asked:** Add `GET /api/shows`, `GET /api/shows/:id`, `POST /api/shows`
@@ -43,7 +43,8 @@ with server-side validation and parameterized queries.
 **Kept:** The route structure and parameterized query pattern.
 **Changed:** Found a validation bug while testing (see "Where the AI got
 it wrong" below) and had DeepSeek fix it.
-**Commit:** local repo `6f39017`, fix in `07ba2be`.
+**Commit:** local repo `6f39017`, fix in `07ba2be` — early local repo, not
+pushed, no link available.
 
 ### 3. 2026-09-28 — DeepSeek — Port backend into course template
 **Asked:** Port the working backend (schema, queries, TVMaze proxy) from
@@ -54,7 +55,7 @@ adding `PUT`/`DELETE` and TVMaze search endpoints that hadn't existed yet.
 **Kept:** The overall structure, the parameterized queries, the TVMaze
 timeout handling.
 **Changed:** Fixed a bug in the `PUT` handler (below) before accepting it.
-**Commit:** `935affa`, `2048d34`, `d6f93c0`.
+**Commits:** `935affa` — https://github.com/JCalaguas/Bingelog/commit/935affa, `2048d34` — https://github.com/JCalaguas/Bingelog/commit/2048d34, `d6f93c0` — https://github.com/JCalaguas/Bingelog/commit/d6f93c0
 
 ### 4. 2026-09-28 — DeepSeek — Client API layer
 **Asked:** Build `client/src/api/index.js`, `httpApi.js`, `mockApi.js` and
@@ -66,7 +67,7 @@ catalog for demo-mode search.
 merge-on-update logic in the mock implementation.
 **Changed:** Nothing at this stage — verified with `node --check` and a
 later browser test.
-**Commit:** `48e57cc`.
+**Commit:** `48e57cc` — https://github.com/JCalaguas/Bingelog/commit/48e57cc
 
 ### 5. 2026-09-28 — DeepSeek — Client components, pages and routing
 **Asked:** Port the planned component tree (atoms/molecules/organisms),
@@ -77,7 +78,7 @@ routing in `App.jsx`/`main.jsx`, and `client/src/styles/global.css`.
 **Kept:** Almost all of it — the component structure follows the M6A2
 breakdown closely.
 **Changed:** Found and fixed a bug after this was accepted (see below).
-**Commit:** `fd201f1`, `9a50496`.
+**Commits:** `fd201f1` — https://github.com/JCalaguas/Bingelog/commit/fd201f1, `9a50496` — https://github.com/JCalaguas/Bingelog/commit/9a50496
 
 ### 6. 2026-09-28 — DeepSeek — TVMaze episode-count lookup
 **Asked:** Implement the "fetch total episodes only after a search result
@@ -89,7 +90,7 @@ is selected" behavior agreed on beforehand — a follow-up call to
 verified with `curl` against a known ended show (Naruto, externalId 495 →
 220 episodes).
 **Changed:** Nothing.
-**Commit:** `2048d34`.
+**Commit:** `2048d34` — https://github.com/JCalaguas/Bingelog/commit/2048d34
 
 ### 7. 2026-10-01 — Claude Code — Basic Auth access gate
 **Asked:** Add an access gate in front of the deployed API so it is not open
@@ -360,7 +361,7 @@ text it came from was that outline.
 the "to be completed" placeholder that the workspace copy of this file still
 carried, and the "Earlier version of this file" section of the workspace copy
 was deleted so both copies of this file are identical.
-**Commit:** the commit that adds this entry (see `git log` for this file).
+**Commits:** `7a5e8dd` (adds this entry and the Personal contribution section) — https://github.com/JCalaguas/Bingelog/commit/7a5e8dd. The journal rewrite is `f5fa648` in my private course workspace repository, so it has no public link.
 
 ### 20. Oct 2026 (worked 2026-10-09, entry written 21:20 +0800) — Claude (chat) and Claude Code (Sonnet 5.5) — Final presentation deck
 **What this entry is:** the slide deck `BingeLog Final Presentation.pptx` and its
@@ -383,7 +384,7 @@ Code to return HTTP 200 on 2026-10-09 earlier in the session, not at the moment
 of the last deck edit. The deck was last rendered in PowerPoint on Windows after
 the font change, and the edits were done with python-pptx on a copy of the
 file, with the original kept as a backup.
-**Commit:** the commit that adds this entry (see `git log` for this file).
+**Commit:** `4c33e1c` (adds this entry; the deck file itself is not in this repository) — https://github.com/JCalaguas/Bingelog/commit/4c33e1c
 
 ## Where the AI got it wrong
 
@@ -397,8 +398,8 @@ validation instead of being rejected.
 with bad input, not something DeepSeek caught on its own.
 **Fix:** DeepSeek added a proper integer check (`Number.isInteger`) before
 the range comparison.
-**Commit:** local repo `07ba2be` — this repo was never pushed publicly
-(see note below), so this commit has no public link. The before/after
+**Commit:** local repo `07ba2be` — early local repo, not pushed, no link
+available. The before/after
 logic is described above from memory of the actual change.
 
 ### 2. PUT overwrote omitted fields with null (found 2026-09-28)
@@ -440,7 +441,7 @@ corrected.
 **Fix:** Claude Code added the total field and the status/episode rules
 (entries 9, 10 and 14). The rules are client-side only, so the same bad
 state is still possible through direct API calls.
-**Commits:** `38575e8`, `7fa9363`, `a2c8121`
+**Commits:** `38575e8` — https://github.com/JCalaguas/Bingelog/commit/38575e8, `7fa9363` — https://github.com/JCalaguas/Bingelog/commit/7fa9363, `a2c8121` — https://github.com/JCalaguas/Bingelog/commit/a2c8121
 
 ### 5. A review called a limiter that let the right password through "the correct pattern" (found 2026-10-09)
 **What happened:** In a first review of my rate limiter, Claude described the
@@ -451,7 +452,7 @@ returned a 200, so an attacker's right guess was never blocked.
 both showed the correct password getting through after the limit.
 **Fix:** I mounted the limiter before the auth check and counted only 401
 responses (entry 17).
-**Commit:** `a35de20`
+**Commit:** `a35de20` — https://github.com/JCalaguas/Bingelog/commit/a35de20
 
 ## Who wrote what
 
