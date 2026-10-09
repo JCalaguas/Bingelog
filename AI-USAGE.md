@@ -249,8 +249,8 @@ steps from a fresh clone).
   and from what I told it.
 - **`journal/week-4.md`** (same workspace commit `bcff955`): **Claude wrote
   this draft** of the security paragraph, from the project's contents rather
-  than from my own account of the week. I will rewrite it in my own words
-  before submitting; until then it is not my writing.
+  than from my own account of the week. I have since rewritten it in my own
+  words (entry 19); the draft from this commit was not my writing.
 - **This file:** corrections to entries 9, 10 and 13 (dates, the superseded
   note, and wording about Vercel) and this entry.
 **Checked:** from a fresh clone of the GitHub repo, the client `npm ci` and
@@ -348,6 +348,19 @@ banner showing on a phone, the banner alone pushes the cards below the fold.
 Not looked at on a real phone, and not checked on the live Vercel site after
 the deploy.
 **Commit:** `1ab3cea` (committed 2026-10-09 19:26 +0800) — https://github.com/JCalaguas/Bingelog/commit/1ab3cea
+
+### 19. Oct 2026 (worked 2026-10-09) — Claude Code (Sonnet 5.5) — Week 4 journal security paragraph: from a Claude outline to my own words
+**What happened:** The security paragraph in my week 4 journal started as an
+outline written by Claude Code (entry 16, workspace commit `bcff955`). That
+draft was built from the project's contents, not from my own account of the
+week, and it was marked as a draft. I then rewrote the paragraph in my own
+words. The final paragraph is my writing, not Claude's. The only AI-written
+text it came from was that outline.
+**Also in this change:** my final "Personal contribution" text, below, replaces
+the "to be completed" placeholder that the workspace copy of this file still
+carried, and the "Earlier version of this file" section of the workspace copy
+was deleted so both copies of this file are identical.
+**Commit:** the commit that adds this entry (see `git log` for this file).
 
 ## Where the AI got it wrong
 
@@ -460,6 +473,18 @@ show through a partial update, because the `null` would just be ignored
 and the old rating would come back. `!== undefined` only falls back when
 the field was left out of the request entirely, so an explicit `null`
 still gets through and clears the field.
+
+## Personal contribution
+
+I wrote the original `EpisodeStepper` component and typed and integrated the
+server security improvements with Claude's guidance, including using a
+Claude-provided snippet for the rate limiter configuration. I tested the login,
+an incorrect password, and the add, delete, and edit-notes features on the
+deployed site. I also set up the Vercel, Render, and Neon projects and their
+environment variables. I decided that shows without a known total episode count
+cannot be marked as Finished, and that the Library should display two columns
+on phones. I also caught and fixed the Show Detail white-screen crash and the
+PUT bug that was clearing `coverUrl` and `externalId` unexpectedly.
 
 ## A note on the local (Week 1) repository
 
