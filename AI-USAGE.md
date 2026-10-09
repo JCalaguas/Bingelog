@@ -4,7 +4,7 @@ This project used ChatGPT for planning, DeepSeek for coding and
 implementation assistance, and Claude (chat and Claude Code) for guidance,
 deployment help, one piece of server code, and the later client work in
 entries 8 to 16 (theme, episode input, status rules, search, login screen,
-deploy config, revised status rules, total-field investigation, docs). None of the tools wrote the whole project — see
+deploy config, revised status rules, total-field investigation, docs). Entry 17 is guidance and review on server changes I wrote myself. None of the tools wrote the whole project — see
 "Who wrote what" below for exactly which parts are mine.
 
 ## How I used AI
@@ -126,9 +126,9 @@ the total (1 when the total is unknown) and follow the total when it changes.
 **Produced:** `statusFromProgress()` in `constants.js`, the status/episode
 rules in `ShowDetailPage.jsx`, and the matching starting episode in
 `AddShowPage.jsx` (Plan to Watch 0, Watching 1, Finished total or 1).
-**Limits:** client-side only. The server and `mockApi.js` do not enforce
-these rules, so calling the API directly can still save a Finished show at
-episode 0.
+**Limits at the time:** client-side only. That is no longer true of the
+server: since commit `a35de20` (entry 17) the server enforces these rules too.
+`mockApi.js` (demo mode) still does not.
 **Checked:** `vite build` passes. Not run in a browser by Claude.
 **Commit:** `7fa9363` — https://github.com/JCalaguas/Bingelog/commit/7fa9363
 
@@ -185,10 +185,10 @@ first one stores 148; Finished is disabled with the hint when there is no
 total; clearing the total on a Finished show gives Watching with the episode
 kept; Add Show disables Finished until a total is entered and drops it when
 the total is cleared.
-**Limits:** client-side only, so the server and `mockApi.js` still accept the
-old states if the API is called directly, and the Library repairs only how an
-old row is displayed, not the stored row, until that show is opened and saved.
-Not tested against the deployed Render API.
+**Limits at the time:** client-side only. Since commit `a35de20` (entry 17)
+the server enforces these rules too; `mockApi.js` still does not. The Library
+repairs only how an old row is displayed, not the stored row, until that show
+is opened and saved. Not tested against the deployed Render API.
 **Commit:** `a2c8121` — https://github.com/JCalaguas/Bingelog/commit/a2c8121
 
 ### 15. Oct 2026 (worked 2026-10-09) — Claude Code (Sonnet 5.5) — Investigating "can't edit total episodes"
@@ -244,6 +244,48 @@ run on an in-memory stand-in). The new commits use the GitHub noreply
 author address and no history was rewritten.
 **Commits:** `de593de` — https://github.com/JCalaguas/Bingelog/commit/de593de
 (workspace repo: `bcff955`)
+
+### 17. Oct 2026 (worked 2026-10-09, CONFIRM the date) — Claude Code (Sonnet 5.5) — Guidance and review for server hardening I wrote myself
+**What this entry is:** `server/server.js` hardening that I wrote myself with
+Claude Code's guidance. Claude Code reviewed it and ran tests; it did not write
+the changes. (CONFIRM: which lines you typed yourself and which, if any, you
+pasted from a suggestion. The comments in the rate limiter section read like
+they may have come from a suggestion.)
+**What the changes are:** `helmet()` and `trust proxy` set to 1; length limits
+(title 200, notes 2000, cover URL 2048); the Finished rules in `validateShow()`
+(a Finished show needs a known total, and its episode must equal the total);
+a `currentEpisode` check that rejects NaN (from `"abc"` or `""`); and a login
+rate limiter (20 failed attempts per IP per 15 minutes, mounted before the auth
+check so a blocked IP gets 429 even with the correct password).
+**What the review caught:** two bugs in my first attempt, per your notes
+(CONFIRM both): the `requestWasSuccessful` option did nothing without
+`skipSuccessfulRequests`, and a dropped `currentEpisode === undefined` guard.
+Separately, an earlier test run on an earlier version of the file (CONFIRM the
+date and that this is a different version) found that the limiter only ran on
+the failure path, so the correct password still got through after the limit,
+and that `currentEpisode: "abc"` returned a 500. Both were fixed in the version
+that was committed.
+**Checked (by Claude Code, on 2026-10-09 — CONFIRM):** a copy of the committed
+`server.js` run against an in-memory database with `AUTH_USER=test` and
+`AUTH_PASS=test`. 21 wrong passwords gave 20 × 401 then 429, and the correct
+password after that gave 429; 30 sequential successful requests gave 30 × 200;
+one character over each length limit gave 400 and the exact limits gave 201;
+`currentEpisode` of `"abc"` and `""` gave 400; Finished with no total and
+Finished with a mismatched episode gave 400, and Finished 12 of 12 gave 201
+(then deleted); and the real-mode client against it could log in, create, edit
+(including notes-only and rating-only updates), change the total and delete.
+**Not tested / limits:** the deployed Render API and the real Postgres
+database were not tested when this was written. The counter is in memory and
+keyed by IP, so it resets on a restart and one person's failed attempts block
+others behind the same address. `trust proxy` of 1 is unverified against
+Render's real setup. `mockApi.js` (demo mode) does not enforce the status
+rules. Old stored rows that break the rules are rejected by direct API updates
+until they are repaired (CONFIRM whether the two affected Neon rows have been
+fixed).
+**Attribution:** the commit carries a `Co-Authored-By: Claude` line that Claude
+Code added by default. (CONFIRM this is the attribution you want for code you
+wrote yourself.)
+**Commit:** `a35de20` — https://github.com/JCalaguas/Bingelog/commit/a35de20
 
 ## Where the AI got it wrong
 

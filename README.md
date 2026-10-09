@@ -124,7 +124,9 @@ no login.
    "Set total episodes first", and clearing the total on a Finished show makes
    it Watching and keeps the episode. Shows are repaired when they load, so an
    old row like Finished at 0 of 148 shows 148 / 148, and the repair is saved
-   the next time that show is saved.
+   the next time that show is saved. The API enforces the same rules: a Finished
+   show with no total, or whose episode is not the total, is rejected with a
+   400.
 
 ### API endpoints
 
@@ -146,8 +148,18 @@ host's health check works.
 
 All routes return JSON. Errors are `{ "error": "message" }` with an
 appropriate status code (400 for invalid input, 404 for a missing show,
-502 if TVMaze is unreachable). No stack traces or connection details are
+429 after too many failed logins, 502 if TVMaze is unreachable). No stack traces or connection details are
 ever returned to the client.
+
+**Hardening.** The API sends the standard security headers through `helmet`.
+Input is validated on the server: title up to 200 characters, notes up to 2000,
+cover URL up to 2048, `currentEpisode` a whole number of 0 or more, and the
+status rules above. Failed logins are rate limited to 20 per IP address per 15
+minutes; once an IP reaches the limit, every request from it gets a 429 (even
+with the correct password) until the window ends. Successful requests do not
+count, and `/healthz`, `/readyz` and CORS preflight are not limited. The
+server trusts one proxy hop (`trust proxy` is 1) because it runs behind
+Render.
 
 ## Project structure
 Bingelog/
@@ -204,16 +216,20 @@ same invented seed data, not against the deployed server.*
 - **Access gate is a single shared login.** HTTP Basic Auth protects the
   deployed API (one username and password from environment variables), and
   the real-mode client asks for it on a login screen. There are no per-user
-  accounts and no rate limiting on failed logins. The public
+  accounts. Failed logins are rate limited, but the counter is in memory (it
+  resets when the server restarts), and it is keyed by IP, so one person's
+  failed attempts also block other people behind the same address. The public
   Pages demo is unprotected on purpose: it only holds browser-local mock data.
 - **Free-tier hosting.** The Render service sleeps when idle, and the API
   connects to Neon as its owner role rather than a limited-permission user.
 - **`mockApi.js` duplicates the server's validation and merge-on-update
   logic**, so the two can drift apart.
-- **The status/episode rules are enforced in the client only.** The server
-  and `mockApi.js` still accept a Finished show at episode 0 or with no total
-  if the API is called directly, and the Library only repairs how an old row
-  is displayed until that show is opened and saved.
+- **Status/episode rules in demo mode and on old rows.** The server enforces
+  the rules, but `mockApi.js` (demo mode) does not. An old stored row that
+  breaks them (Finished at the wrong episode, or Finished with no total) is
+  repaired by the client when it is opened and saved; until then the Library
+  only repairs how it is displayed, and a direct API update to such a row is
+  rejected with a 400.
 - **No way to add or change a cover image** outside of what TVMaze returns
   — a cover image URL field is planned for manual entries.
 - Two moderate `npm audit` findings in dev tooling dependencies, not yet
