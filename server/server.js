@@ -1,11 +1,17 @@
 import { createHash, timingSafeEqual } from 'node:crypto'
 import express from 'express'
 import cors from 'cors'
+import helmet from 'helmet'
+import { rateLimit } from 'express-rate-limit'
 import { pool } from './db/pool.js'
 import * as shows from './showsRepo.js'
 import * as tvmaze from './tvmaze.js'
 
 const app = express()
+
+// Trust Render's proxy (1 hop) so rate limiting and logs use the real client IP 
+// instead of the load balancer's IP.
+app.set('trust proxy', 1)
 
 // CORS before the routes. Middleware registered after a route never sees that
 // route's requests.
@@ -18,6 +24,7 @@ const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173')
   .map((origin) => origin.trim())
   .filter(Boolean)
 
+app.use(helmet())
 app.use(cors({ origin: allowedOrigins }))
 app.use(express.json({ limit: '100kb' }))
 
@@ -55,6 +62,23 @@ function safeEqual(a, b) {
   const hash = (value) => createHash('sha256').update(value).digest()
   return timingSafeEqual(hash(a), hash(b))
 }
+
+const authLimiter = rateLimit({
+windowMs: 15 * 60 * 1000,
+limit: 20,
+standardHeaders: 'draft-7',
+legacyHeaders: false,
+skipSuccessfulRequests: true,
+requestWasSuccessful: (request, response) => response.statusCode !== 401,
+handler: (request, response) => {
+response.set('WWW-Authenticate', 'Basic realm="BingeLog"')
+response.status(429).json({ error: 'Too many failed login attempts, try again later' })
+}
+})
+
+// Mount the limiter before the auth middleware so it can block the IP entirely on the 21st request,
+// even if they suddenly provide the correct password.
+app.use(authLimiter)
 
 app.use((request, response, next) => {
   if (!authUser || !authPass) return next() // local dev without auth configured
@@ -104,17 +128,38 @@ function validateShow(body) {
       : null
 
   if (!title) errors.push('title is required')
+  if (title.length > 200) {
+    errors.push('title must be 200 characters or fewer')
+  }
+
   if (!STATUSES.includes(status)) {
     errors.push(`status must be one of: ${STATUSES.join(', ')}`)
   }
-  if (currentEpisode === undefined || currentEpisode < 0) {
-    errors.push('currentEpisode must be an integer of 0 or more')
-  }
+  
+  // Catch NaN (from strings like "abc") instead of just checking undefined
+ if (currentEpisode === undefined || Number.isNaN(currentEpisode) || currentEpisode < 0) {
+errors.push('currentEpisode must be an integer of 0 or more')
+}
+  
   if (Number.isNaN(totalEpisodes) || (totalEpisodes !== null && totalEpisodes <= 0)) {
     errors.push('totalEpisodes must be a positive integer or null')
   }
   if (Number.isNaN(rating) || (rating !== null && (rating < 1 || rating > 5))) {
     errors.push('rating must be an integer from 1 to 5 or null')
+  }
+
+  if (notes !== null && notes.length > 2000) {
+    errors.push('notes must be 2000 characters or fewer')
+  }
+  if (coverUrl !== null && coverUrl.length > 2048) {
+    errors.push('coverUrl must be 2048 characters or fewer')
+  }
+
+  if (status === 'Finished' && totalEpisodes === null) {
+    errors.push('a Finished show needs a known total episodes count')
+  }
+  if (status === 'Finished' && totalEpisodes !== null && currentEpisode !== totalEpisodes) {
+    errors.push('currentEpisode must equal totalEpisodes for a Finished show')
   }
 
   return {
