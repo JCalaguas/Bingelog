@@ -209,3 +209,12 @@ export const searchApi = {
     }
   },
 }
+
+// Demo mode has no server and no login.
+export const authApi = {
+  required: false,
+  isLoggedIn: () => true,
+  subscribe: () => () => {},
+  login: async () => {},
+  logout: () => {},
+}

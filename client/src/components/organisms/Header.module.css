@@ -41,3 +41,16 @@
   font-weight: 700;
   border-bottom-color: var(--color-primary);
 }
+
+.logout {
+  font-size: var(--font-size-base);
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  padding: var(--space-1) 0;
+  cursor: pointer;
+}
+
+.logout:hover {
+  color: var(--color-primary);
+}

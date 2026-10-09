@@ -1,7 +1,10 @@
 import { NavLink } from 'react-router-dom';
+import { authApi } from '../../api';
+import useLoggedIn from '../../hooks/useLoggedIn';
 import styles from './Header.module.css';
 
 export default function Header() {
+  const loggedIn = useLoggedIn();
   const linkClass = ({ isActive }) =>
     isActive ? `${styles.link} ${styles.active}` : styles.link;
 
@@ -17,6 +20,11 @@ export default function Header() {
         <NavLink to="/add" className={linkClass}>
           Add show
         </NavLink>
+        {authApi.required && loggedIn && (
+          <button type="button" className={styles.logout} onClick={authApi.logout}>
+            Log out
+          </button>
+        )}
       </nav>
     </header>
   );

@@ -22,3 +22,4 @@ const implementation = USING_MOCK_API ? mockApi : httpApi
 
 export const showsApi = implementation.showsApi
 export const searchApi = implementation.searchApi
+export const authApi = implementation.authApi
